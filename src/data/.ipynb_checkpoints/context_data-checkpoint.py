@@ -24,7 +24,7 @@ def process_context_data(users, books, ratings1, ratings2):
     users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
     users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
     users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
-    users = users.drop(['location'], axis=1)  # loc없에주고 도시, 주, 나라로 바꿔줌
+    users = users.drop(['location'], axis=1)
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
