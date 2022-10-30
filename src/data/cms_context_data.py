@@ -19,11 +19,17 @@ def age_map(x: int) -> int:
         return 5
     else:
         return 6
+    
+def remove_loc(x):
+    return 'None'
 
-def process_context_data(users, books, ratings1, ratings2):
-    users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
-    users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
-    users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
+def cms_process_context_data(users, books, ratings1, ratings2):
+    users['location_city'] = users['location'].apply(remove_loc)
+    users['location_state'] = users['location'].apply(remove_loc)
+    users['location_country'] = users['location'].apply(remove_loc)
+    # users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
+    # users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
+    # users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
     users = users.drop(['location'], axis=1)  # loc없에주고 도시, 주, 나라로 바꿔줌
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
@@ -78,7 +84,7 @@ def process_context_data(users, books, ratings1, ratings2):
     return idx, train_df, test_df
 
 
-def context_data_load(args):
+def cms_context_data_load(args):
 
     ######################## DATA LOAD
     users = pd.read_csv(args.DATA_PATH + 'users.csv')
@@ -106,7 +112,7 @@ def context_data_load(args):
     test['isbn'] = test['isbn'].map(isbn2idx)
     books['isbn'] = books['isbn'].map(isbn2idx)
 
-    idx, context_train, context_test = process_context_data(users, books, train, test)
+    idx, context_train, context_test = cms_process_context_data(users, books, train, test)
     field_dims = np.array([len(user2idx), len(isbn2idx),
                             6, len(idx['loc_city2idx']), len(idx['loc_state2idx']), len(idx['loc_country2idx']),
                             len(idx['category2idx']), len(idx['publisher2idx']), len(idx['language2idx']), len(idx['author2idx'])], dtype=np.uint32)

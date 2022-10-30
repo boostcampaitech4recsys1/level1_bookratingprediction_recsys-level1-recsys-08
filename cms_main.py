@@ -4,7 +4,8 @@ import pandas as pd
 
 from src import seed_everything
 
-from src.data import context_data_load, context_data_split, context_data_loader
+# from src.data import context_data_load, context_data_split, context_data_loader
+from src.data.cms_context_data import cms_context_data_load, context_data_split, context_data_loader
 from src.data import dl_data_load, dl_data_split, dl_data_loader
 from src.data import image_data_load, image_data_split, image_data_loader
 from src.data import text_data_load, text_data_split, text_data_loader
@@ -21,7 +22,7 @@ def main(args):
     ######################## DATA LOAD
     print(f'--------------- {args.MODEL} Load Data ---------------')
     if args.MODEL in ('FM', 'FFM'):
-        data = context_data_load(args)
+        data = cms_context_data_load(args)
     elif args.MODEL in ('NCF', 'WDN', 'DCN'):
         data = dl_data_load(args)
     elif args.MODEL == 'CNN_FM':
