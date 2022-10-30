@@ -2,3 +2,8 @@ images/
 *.jpg
 *.csv
 .DS_Store
+.ipynb_checkpoints
+__pycache__/
+*.ipynb
+*.json
+*.pt
