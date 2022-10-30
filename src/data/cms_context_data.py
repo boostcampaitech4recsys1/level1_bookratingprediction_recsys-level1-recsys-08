@@ -20,19 +20,25 @@ def age_map(x: int) -> int:
     else:
         return 6
     
-def remove_loc(x):
+def remove_info(x):
     return 'None'
 
 def cms_process_context_data(users, books, ratings1, ratings2):
-    users['location_city'] = users['location'].apply(remove_loc)
-    users['location_state'] = users['location'].apply(remove_loc)
-    users['location_country'] = users['location'].apply(remove_loc)
+    users['location_city'] = users['location'].apply(remove_info)
+    users['location_state'] = users['location'].apply(remove_info)
+    users['location_country'] = users['location'].apply(remove_info)
     # users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
     # users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
     # users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
     users = users.drop(['location'], axis=1)  # loc없에주고 도시, 주, 나라로 바꿔줌
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
+    
+    ## no language
+    books['language'] = books['language'].apply(remove_info)
+    
+    ## no pulisher
+    books['publisher'] = books['publisher'].apply(remove_info)
 
     # 인덱싱 처리된 데이터 조인
     context_df = ratings.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'publisher', 'language', 'book_author']], on='isbn', how='left')
