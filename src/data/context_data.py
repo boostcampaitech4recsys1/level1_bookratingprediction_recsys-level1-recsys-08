@@ -137,7 +137,7 @@ def context_data_load(args):
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
-    val = pd.read_csv('validation1.csv')
+    val = pd.read_csv(args.DATA_PATH + 'validation1.csv')
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
