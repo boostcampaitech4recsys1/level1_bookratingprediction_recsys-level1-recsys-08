@@ -21,6 +21,25 @@ def age_map(x: int) -> int:
     else:
         return 6
 
+
+# 미션 1 출판사명 수정함수
+def publisher_modify(books):
+    publisher_dict=(books['publisher'].value_counts()).to_dict()
+    publisher_count_df= pd.DataFrame(list(publisher_dict.items()),columns = ['publisher','count'])
+
+    publisher_count_df = publisher_count_df.sort_values(by=['count'], ascending = False)
+    
+    modify_list = publisher_count_df[publisher_count_df['count']>1].publisher.values
+    
+    for publisher in modify_list:
+        try:
+            number = books[books['publisher']==publisher]['isbn'].apply(lambda x: x[:4]).value_counts().index[0]
+            right_publisher = books[books['isbn'].apply(lambda x: x[:4])==number]['publisher'].value_counts().index[0]
+            books.loc[books[books['isbn'].apply(lambda x: x[:4])==number].index,'publisher'] = right_publisher
+        except: 
+            pass
+        
+        
 # books에 category_high를 추가해주는 코드
 def make_category_high(books:pd.DataFrame) -> pd.DataFrame:
     books.loc[books[books['category'].notnull()].index, 'category'] = books[books['category'].notnull()]['category'].apply(lambda x: re.sub('[\W_]+',' ',x).strip())
