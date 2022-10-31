@@ -4,7 +4,9 @@ images/
 *.npy
 .DS_Store
 .ipynb_checkpoints
-__pycache__/
-*.json
-*.pt
+*__pycache__
+config/
 *.yaml
+__pycache__/
+.env
+*.pt
