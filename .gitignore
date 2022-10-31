@@ -2,3 +2,4 @@ images/
 *.jpg
 *.csv
 .DS_Store
+config/
