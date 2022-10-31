@@ -79,7 +79,7 @@ def process_context_data(users, books, ratings1, ratings2):
     context_df = ratings.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high', 'publisher', 'language', 'book_author']], on='isbn', how='left')
     train_df = ratings1.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high',  'publisher', 'language', 'book_author']], on='isbn', how='left')
     test_df = ratings2.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high',  'publisher', 'language', 'book_author']], on='isbn', how='left')
-
+        
     # 인덱싱 처리
     loc_city2idx = {v:k for k,v in enumerate(context_df['location_city'].unique())}
     loc_state2idx = {v:k for k,v in enumerate(context_df['location_state'].unique())}
@@ -91,6 +91,7 @@ def process_context_data(users, books, ratings1, ratings2):
     test_df['location_city'] = test_df['location_city'].map(loc_city2idx)
     test_df['location_state'] = test_df['location_state'].map(loc_state2idx)
     test_df['location_country'] = test_df['location_country'].map(loc_country2idx)
+
 
     train_df['age'] = train_df['age'].fillna(int(train_df['age'].mean()))
     train_df['age'] = train_df['age'].apply(age_map)
@@ -138,6 +139,14 @@ def context_data_load(args):
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
+    # age가 결측값인 행 제거 (하면 안 될 듯)
+    # users = users.dropna(subset=['age'])
+    
+    # language, category 결측값인 행 제거
+    # books = books.dropna(subset=['language'])
+    # books = books.dropna(subset=['category'])
+    
+    
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
 
