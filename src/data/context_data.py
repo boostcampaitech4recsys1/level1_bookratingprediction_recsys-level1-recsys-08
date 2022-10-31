@@ -132,11 +132,12 @@ def process_context_data(users, books, ratings1, ratings2):
 def context_data_load(args):
 
     ######################## DATA LOAD
-    users = pd.read_csv(args.DATA_PATH + 'users.csv')
+    users = pd.read_csv(args.DATA_PATH + 'users_location.csv')
     books = pd.read_csv(args.DATA_PATH + 'books.csv')
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
+    val = pd.read_csv('validation1.csv')
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -161,9 +162,11 @@ def context_data_load(args):
     field_dims = np.array([len(user2idx), len(isbn2idx),
                             6, len(idx['loc_city2idx']), len(idx['loc_state2idx']), len(idx['loc_country2idx']),
                             len(idx['category2idx']), len(idx['categoryhigh2idx']), len(idx['publisher2idx']), len(idx['language2idx']), len(idx['author2idx'])], dtype=np.uint32)
-
+    val.user_id = val.user_id.map(user2idx)
+    val.isbn = val.isbn.map(isbn2idx)
     data = {
             'train':context_train,
+            'valid': context_test.drop(['rating'], axis=1).merge(val, on=['user_id','isbn']),
             'test':context_test.drop(['rating'], axis=1),
             'field_dims':field_dims,
             'users':users,
@@ -180,14 +183,19 @@ def context_data_load(args):
 
 
 def context_data_split(args, data):
-    X_train, X_valid, y_train, y_valid = train_test_split(
-                                                        data['train'].drop(['rating'], axis=1),
-                                                        data['train']['rating'],
-                                                        test_size=args.TEST_SIZE,
-                                                        random_state=args.SEED,
-                                                        shuffle=True
-                                                        )
-    data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
+    # X_train, X_valid, y_train, y_valid = train_test_split(
+    #                                                     data['train'].drop(['rating'], axis=1),
+    #                                                     data['train']['rating'],
+    #                                                     test_size=args.TEST_SIZE,
+    #                                                     random_state=args.SEED,
+    #                                                     shuffle=True
+    #                                                     )
+    # data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
+    data['X_train']=data['train'].drop(['rating'], axis=1)
+    data['y_train']=data['train']['rating']
+
+    data['X_valid']=data['valid'].drop(['rating'], axis=1)
+    data['y_valid']=data['valid']['rating']
     return data
 
 def context_data_loader(args, data):
