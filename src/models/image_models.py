@@ -110,7 +110,7 @@ class CNN_FM:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'Model saved'])
             else:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'None'])
-            tk0.set_postfix(train_loss=total_loss/n, valid_loss=val_total_loss/val_n)
+            tk0.set_postfix(train_loss=total_loss/n, valid_loss=val_total_loss/val_n, min_loss=minimum_loss)
         return minimum_loss
 
 
