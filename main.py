@@ -1,6 +1,8 @@
 import time
 import argparse
 import pandas as pd
+from omegaconf import OmegaConf
+from datetime import datetime
 
 from src import seed_everything
 
@@ -99,7 +101,9 @@ def main(args):
     now_date = time.strftime('%Y%m%d', now)
     now_hour = time.strftime('%X', now)
     save_time = now_date + '_' + now_hour.replace(':', '')
-    submission.to_csv('submit/{}_{}.csv'.format(save_time, args.MODEL), index=False)
+    submit_file_path = 'submit/{}_{}.csv'.format(save_time, args.MODEL)
+    submission.to_csv(submit_file_path, index=False)
+    print(f"Submit File Saved: {submit_file_path}")
 
 
 
