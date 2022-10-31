@@ -18,9 +18,9 @@ def seed_everything(seed):
 
 def get_param(parser, args):
     default_set = set(vars(parser.parse_args([])).items())
-    input_set = set(vars(args).items())
-    get_param_dict = dict(input_set - default_set)
-    return get_param_dict
+    input_items = vars(args).items()
+    result = {o[0]:o[1] for o in input_items if o not in default_set}
+    return result
 
 
 def slack_post(parser, args, val_loss):
