@@ -72,6 +72,8 @@ def process_context_data(users, books, ratings1, ratings2):
     
     # books에 category_high 추가
     books = make_category_high(books)
+    # year_of_publication 처리
+    books.loc[books.year_of_publication<1900, 'year_of_publication'] = [1980, 1956, 1971]
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
@@ -138,6 +140,8 @@ def context_data_load(args):
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
     val = pd.read_csv(args.DATA_PATH + 'validation1.csv')
+    val.user_id = val.user_id.map(user2idx)
+    val.isbn = val.isbn.map(isbn2idx)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -162,8 +166,7 @@ def context_data_load(args):
     field_dims = np.array([len(user2idx), len(isbn2idx),
                             6, len(idx['loc_city2idx']), len(idx['loc_state2idx']), len(idx['loc_country2idx']),
                             len(idx['category2idx']), len(idx['categoryhigh2idx']), len(idx['publisher2idx']), len(idx['language2idx']), len(idx['author2idx'])], dtype=np.uint32)
-    val.user_id = val.user_id.map(user2idx)
-    val.isbn = val.isbn.map(isbn2idx)
+
     data = {
             'train':context_train,
             'valid': context_test.drop(['rating'], axis=1).merge(val, on=['user_id','isbn']),
