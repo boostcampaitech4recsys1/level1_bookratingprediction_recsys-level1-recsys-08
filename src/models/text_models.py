@@ -129,6 +129,7 @@ class DeepCoNN:
             else:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'None'])
             tk0.set_postfix(train_loss=total_loss/n, valid_loss=val_total_loss/val_n)
+        return minimum_loss
 
 
     def predict(self, test_data_loader):
