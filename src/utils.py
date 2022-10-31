@@ -27,12 +27,11 @@ def slack_post(parser, args, val_loss):
     name = os.environ.get("NAME", default="MARK8")
     api = os.environ.get("WEBHOOK_API", default="None")
     now = datetime.now().strftime("🕐 (%Y-%m-%d %H:%M:%S)")
-    intro = f"{name}"
     param = get_param(parser, args)
     table_string = param
-    param_table = f"\`\`\`\n{table_string}\n\`\`\`"
-    text=f"[🔥{param['MODEL']}🔥]\nMin Validation Loss: 🎖️{val_loss:.5g}🎖️\n{param_table}"
-    message=f'curl -s -d "payload={{\\"username\\":\\"{name}\\", \\"text\\":\\"{intro}\n{text}\\"}}" "{api}"'
+    param_table = f"\`\`\`Hyper Parameter\n{table_string}\n\`\`\`"
+    text=f"[🔥{param['MODEL']}🔥] ({name})\nMin Validation Loss: 🎖️{val_loss:.5g}🎖️\n{param_table}"
+    message=f'curl -s -d "payload={{\\"username\\":\\"{name}\\", \\"text\\":\\"{text}\\"}}" "{api}"'
     e,o = sp.getstatusoutput(message)
     if e != 0:
         raise Exception(f"Slack에 메시지를 보내는 과정에서 다음과 같은 에러 발생.\n{o}")
