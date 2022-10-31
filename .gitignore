@@ -3,6 +3,10 @@ images/
 *.csv
 *.npy
 .DS_Store
+.ipynb_checkpoints
+*__pycache__
 config/
 
 __pycache__/
+.env
+*.pt
