@@ -1,3 +1,4 @@
+import re
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -20,18 +21,45 @@ def age_map(x: int) -> int:
     else:
         return 6
 
+# books에 category_high를 추가해주는 코드
+def make_category_high(books:pd.DataFrame) -> pd.DataFrame:
+    books.loc[books[books['category'].notnull()].index, 'category'] = books[books['category'].notnull()]['category'].apply(lambda x: re.sub('[\W_]+',' ',x).strip())
+    books['category'] = books['category'].str.lower()
+    categories = ['garden','crafts','physics','adventure','music','fiction','nonfiction','science','science fiction','social','homicide',
+    'sociology','disease','religion','christian','philosophy','psycholog','mathemat','agricult','environmental',
+    'business','poetry','drama','literary','travel','motion picture','children','cook','literature','electronic',
+    'humor','animal','bird','photograph','computer','house','ecology','family','architect','camp','criminal','language','india']
+
+    books['category_high'] = books['category'].copy()
+    for category in categories:
+        books.loc[books[books['category'].str.contains(category,na=False)].index,'category_high'] = category
+        
+    category_high_df = pd.DataFrame(books['category_high'].value_counts()).reset_index()
+    category_high_df.columns = ['category','count']
+    others_list = category_high_df[category_high_df['count']<5]['category'].values
+    books.loc[books[books['category_high'].isin(others_list)].index, 'category_high']='others'
+    return books
+
+
 def process_context_data(users, books, ratings1, ratings2):
-    users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
-    users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
-    users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
+    location_set = {'location_city','location_state','location_country'}
+    if len(set(users.columns).intersection(location_set))==3: # 기존 users에 city, state, country가 존재한다면,
+        pass
+    else:
+        users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
+        users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
+        users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
     users = users.drop(['location'], axis=1)
+    
+    # books에 category_high 추가
+    books = make_category_high(books)
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
     # 인덱싱 처리된 데이터 조인
-    context_df = ratings.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'publisher', 'language', 'book_author']], on='isbn', how='left')
-    train_df = ratings1.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'publisher', 'language', 'book_author']], on='isbn', how='left')
-    test_df = ratings2.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'publisher', 'language', 'book_author']], on='isbn', how='left')
+    context_df = ratings.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high', 'publisher', 'language', 'book_author']], on='isbn', how='left')
+    train_df = ratings1.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high',  'publisher', 'language', 'book_author']], on='isbn', how='left')
+    test_df = ratings2.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high',  'publisher', 'language', 'book_author']], on='isbn', how='left')
 
     # 인덱싱 처리
     loc_city2idx = {v:k for k,v in enumerate(context_df['location_city'].unique())}
@@ -52,15 +80,18 @@ def process_context_data(users, books, ratings1, ratings2):
 
     # book 파트 인덱싱
     category2idx = {v:k for k,v in enumerate(context_df['category'].unique())}
+    categoryhigh2idx = {v:k for k,v in enumerate(context_df['category_high'].unique())}
     publisher2idx = {v:k for k,v in enumerate(context_df['publisher'].unique())}
     language2idx = {v:k for k,v in enumerate(context_df['language'].unique())}
     author2idx = {v:k for k,v in enumerate(context_df['book_author'].unique())}
 
     train_df['category'] = train_df['category'].map(category2idx)
+    train_df['category_high'] = train_df['category_high'].map(categoryhigh2idx)
     train_df['publisher'] = train_df['publisher'].map(publisher2idx)
     train_df['language'] = train_df['language'].map(language2idx)
     train_df['book_author'] = train_df['book_author'].map(author2idx)
     test_df['category'] = test_df['category'].map(category2idx)
+    test_df['category_high'] = test_df['category_high'].map(categoryhigh2idx)
     test_df['publisher'] = test_df['publisher'].map(publisher2idx)
     test_df['language'] = test_df['language'].map(language2idx)
     test_df['book_author'] = test_df['book_author'].map(author2idx)
@@ -70,6 +101,7 @@ def process_context_data(users, books, ratings1, ratings2):
         "loc_state2idx":loc_state2idx,
         "loc_country2idx":loc_country2idx,
         "category2idx":category2idx,
+        "categoryhigh2idx":categoryhigh2idx,
         "publisher2idx":publisher2idx,
         "language2idx":language2idx,
         "author2idx":author2idx,

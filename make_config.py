@@ -1,110 +1,23 @@
-import time
+import time, os
 import argparse
-import pandas as pd
 from omegaconf import OmegaConf
 from datetime import datetime
+import pandas as pd
 
-from src import seed_everything
-
-from src.data import context_data_load, context_data_split, context_data_loader
-from src.data import dl_data_load, dl_data_split, dl_data_loader
-from src.data import image_data_load, image_data_split, image_data_loader
-from src.data import text_data_load, text_data_split, text_data_loader
-
-from src import FactorizationMachineModel, FieldAwareFactorizationMachineModel
-from src import NeuralCollaborativeFiltering, WideAndDeepModel, DeepCrossNetworkModel
-from src import CNN_FM
-from src import DeepCoNN
-
-
-def main(args):
-    seed_everything(args.SEED)
-
-    ######################## DATA LOAD
-    print(f'--------------- {args.MODEL} Load Data ---------------')
-    if args.MODEL in ('FM', 'FFM'):
-        data = context_data_load(args)
-    elif args.MODEL in ('NCF', 'WDN', 'DCN'):
-        data = dl_data_load(args)
-    elif args.MODEL == 'CNN_FM':
-        data = image_data_load(args)
-    elif args.MODEL == 'DeepCoNN':
-        import nltk
-        nltk.download('punkt')
-        data = text_data_load(args)
-    else:
-        pass
-
-    ######################## Train/Valid Split
-    print(f'--------------- {args.MODEL} Train/Valid Split ---------------')
-    if args.MODEL in ('FM', 'FFM'):
-        data = context_data_split(args, data)
-        data = context_data_loader(args, data)
-
-    elif args.MODEL in ('NCF', 'WDN', 'DCN'):
-        data = dl_data_split(args, data)
-        data = dl_data_loader(args, data)
-
-    elif args.MODEL=='CNN_FM':
-        data = image_data_split(args, data)
-        data = image_data_loader(args, data)
-
-    elif args.MODEL=='DeepCoNN':
-        data = text_data_split(args, data)
-        data = text_data_loader(args, data)
-    else:
-        pass
-
-    ######################## Model
-    print(f'--------------- INIT {args.MODEL} ---------------')
-    if args.MODEL=='FM':
-        model = FactorizationMachineModel(args, data)
-    elif args.MODEL=='FFM':
-        model = FieldAwareFactorizationMachineModel(args, data)
-    elif args.MODEL=='NCF':
-        model = NeuralCollaborativeFiltering(args, data)
-    elif args.MODEL=='WDN':
-        model = WideAndDeepModel(args, data)
-    elif args.MODEL=='DCN':
-        model = DeepCrossNetworkModel(args, data)
-    elif args.MODEL=='CNN_FM':
-        model = CNN_FM(args, data)
-    elif args.MODEL=='DeepCoNN':
-        model = DeepCoNN(args, data)
-    else:
-        pass
-
-    ######################## TRAIN
-    print(f'--------------- {args.MODEL} TRAINING ---------------')
-    model.train()
-
-    ######################## INFERENCE
-    print(f'--------------- {args.MODEL} PREDICT ---------------')
-    if args.MODEL in ('FM', 'FFM', 'NCF', 'WDN', 'DCN'):
-        predicts = model.predict(data['test_dataloader'])
-    elif args.MODEL=='CNN_FM':
-        predicts  = model.predict(data['test_dataloader'])
-    elif args.MODEL=='DeepCoNN':
-        predicts  = model.predict(data['test_dataloader'])
-    else:
-        pass
-
-    ######################## SAVE PREDICT
-    print(f'--------------- SAVE {args.MODEL} PREDICT ---------------')
-    submission = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
-    if args.MODEL in ('FM', 'FFM', 'NCF', 'WDN', 'DCN', 'CNN_FM', 'DeepCoNN'):
-        submission['rating'] = predicts
-    else:
-        pass
-
-    now = time.localtime()
-    now_date = time.strftime('%Y%m%d', now)
-    now_hour = time.strftime('%X', now)
-    save_time = now_date + '_' + now_hour.replace(':', '')
-    submit_file_path = 'submit/{}_{}.csv'.format(save_time, args.MODEL)
-    submission.to_csv(submit_file_path, index=False)
-    print(f"Submit File Saved: {submit_file_path}")
-
+def make_config(args, path=False) -> None:
+    """
+    Save config yaml from args_parser
+    """
+    arg_dict = vars(args)
+    now = datetime.now().strftime("%y%m%d_%H:%M:%S")
+    cc = OmegaConf.create(arg_dict)
+    if path is False:
+        path='config'
+        os.makedirs(path, exist_ok=True)
+    conf_name = f'{now}_{args.MODEL}_config.yaml'
+    file_path = os.path.join(path,conf_name)
+    OmegaConf.save(cc, file_path)
+    print(f"Config Saved: {file_path}")
 
 
 if __name__ == "__main__":
@@ -166,4 +79,4 @@ if __name__ == "__main__":
     arg('--DEEPCONN_OUT_DIM', type=int, default=32, help='DEEP_CONN에서 1D conv의 출력 크기를 조정할 수 있습니다.')
 
     args = parser.parse_args()
-    main(args)
+    make_config(args)
