@@ -1,4 +1,4 @@
-from .utils import seed_everything
+from .utils import seed_everything, slack_post
 
 # from .data.sparse_data import sparse_data_load
 # from .data.context_data import context_data_load, context_data_split, context_data_loader

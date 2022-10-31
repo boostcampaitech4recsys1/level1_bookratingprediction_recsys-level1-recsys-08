@@ -4,7 +4,7 @@ import pandas as pd
 from omegaconf import OmegaConf
 from datetime import datetime
 
-from src import seed_everything
+from src import seed_everything, slack_post
 
 from src.data import context_data_load, context_data_split, context_data_loader
 from src.data import dl_data_load, dl_data_split, dl_data_loader
@@ -17,7 +17,7 @@ from src import CNN_FM
 from src import DeepCoNN
 
 
-def main(args):
+def main(parser, args):
     seed_everything(args.SEED)
 
     ######################## DATA LOAD
@@ -76,7 +76,7 @@ def main(args):
 
     ######################## TRAIN
     print(f'--------------- {args.MODEL} TRAINING ---------------')
-    model.train()
+    val_loss = model.train()
 
     ######################## INFERENCE
     print(f'--------------- {args.MODEL} PREDICT ---------------')
@@ -106,6 +106,11 @@ def main(args):
     submission.to_csv(submit_file_path, index=False)
     print(f"Submit File Saved: {submit_file_path}")
 
+    # slack post
+    if not args.NOSLACK:
+        slack_post(parser, args, val_loss)
+
+
 
 
 if __name__ == "__main__":
@@ -121,6 +126,7 @@ if __name__ == "__main__":
     arg('--DATA_SHUFFLE', type=bool, default=True, help='데이터 셔플 여부를 조정할 수 있습니다.')
     arg('--TEST_SIZE', type=float, default=0.2, help='Train/Valid split 비율을 조정할 수 있습니다.')
     arg('--SEED', type=int, default=42, help='seed 값을 조정할 수 있습니다.')
+    arg('--NOSLACK', action='store_true', default=False , help='Slack 메시지 표시 안함.')
     
     ############### TRAINING OPTION
     arg('--BATCH_SIZE', type=int, default=1024, help='Batch size를 조정할 수 있습니다.')
@@ -169,4 +175,4 @@ if __name__ == "__main__":
     arg('--DEEPCONN_OUT_DIM', type=int, default=32, help='DEEP_CONN에서 1D conv의 출력 크기를 조정할 수 있습니다.')
 
     args = parser.parse_args()
-    main(args)
+    main(parser, args)

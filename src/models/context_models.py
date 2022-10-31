@@ -47,8 +47,7 @@ class FactorizationMachineModel:
     def train(self):
       # model: type, optimizer: torch.optim, train_dataloader: DataLoader, criterion: torch.nn, device: str, log_interval: int=100
         minimum_loss = 999999999
-        val_total_loss = 0
-        val_n = 0
+        
         if self.pretrained is not None:
             self.model.load_state_dict(torch.load(self.pretrained))
             print('--------------- PRETRAINED_MODEL LOAD ---------------')
@@ -72,15 +71,14 @@ class FactorizationMachineModel:
 
             rmse_score = self.predict_train()
 
-            val_total_loss += rmse_score
-            val_n += 1
-            if minimum_loss > (val_total_loss/val_n):
-                minimum_loss = (val_total_loss/val_n)
+            if minimum_loss > rmse_score:
+                minimum_loss = rmse_score
                 if not os.path.exists('./models'):
                     os.makedirs('./models')
                 torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
             
-            print('epoch:', epoch, 'validation: rmse:', rmse_score)
+            print('epoch:', epoch, '| validation rmse:', rmse_score, '| minimum rmse:', minimum_loss)
+        return minimum_loss
 
 
 
@@ -144,8 +142,6 @@ class FieldAwareFactorizationMachineModel:
     def train(self):
       # model: type, optimizer: torch.optim, train_dataloader: DataLoader, criterion: torch.nn, device: str, log_interval: int=100
         minimum_loss = 999999999
-        val_total_loss = 0
-        val_n = 0
         if self.pretrained is not None:
             self.model.load_state_dict(torch.load(self.pretrained))
             print('--------------- PRETRAINED_MODEL LOAD ---------------')
@@ -166,16 +162,15 @@ class FieldAwareFactorizationMachineModel:
                     total_loss = 0
 
             rmse_score = self.predict_train()
-
-            val_total_loss += rmse_score
-            val_n += 1
-            if minimum_loss > (val_total_loss/val_n):
-                minimum_loss = (val_total_loss/val_n)
+            
+            if minimum_loss > rmse_score:
+                minimum_loss = rmse_score
                 if not os.path.exists('./models'):
                     os.makedirs('./models')
                 torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
             
-            print('epoch:', epoch, 'validation: rmse:', rmse_score)
+            print('epoch:', epoch, '| validation rmse:', rmse_score, '| minimum rmse:', minimum_loss)
+        return minimum_loss
 
 
     def predict_train(self):
