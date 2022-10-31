@@ -77,7 +77,8 @@ class FactorizationMachineModel:
                     os.makedirs('./models')
                 torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
             
-            print('epoch:', epoch, 'validation: rmse:', rmse_score)
+            print('epoch:', epoch, '| validation rmse:', rmse_score, '| minimum rmse:', minimum_loss)
+        return minimum_loss
 
 
 
@@ -168,7 +169,8 @@ class FieldAwareFactorizationMachineModel:
                     os.makedirs('./models')
                 torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
             
-            print('epoch:', epoch, 'validation: rmse:', rmse_score)
+            print('epoch:', epoch, '| validation rmse:', rmse_score, '| minimum rmse:', minimum_loss)
+        return minimum_loss
 
 
     def predict_train(self):
