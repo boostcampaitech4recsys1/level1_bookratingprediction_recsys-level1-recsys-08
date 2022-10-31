@@ -2,6 +2,9 @@ import tqdm
 
 import numpy as np
 
+import time
+import os
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -32,9 +35,23 @@ class FactorizationMachineModel:
         self.model = _FactorizationMachineModel(self.field_dims, self.embed_dim).to(self.device)
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=self.learning_rate, amsgrad=True, weight_decay=self.weight_decay)
 
+        now = time.localtime()
+        now_date = time.strftime('%Y%m%d', now)
+        now_hour = time.strftime('%X', now)
+        self.save_time = now_date + '_' + now_hour.replace(':', '')
+        self.model_name = 'FM_MODEL'
+        self.min_val_loss = args.MIN_VAL_LOSS
+        self.pretrained = args.PRETRAINED
+
 
     def train(self):
       # model: type, optimizer: torch.optim, train_dataloader: DataLoader, criterion: torch.nn, device: str, log_interval: int=100
+        minimum_loss = 999999999
+        val_total_loss = 0
+        val_n = 0
+        if self.pretrained is not None:
+            self.model.load_state_dict(torch.load(self.pretrained))
+            print('--------------- PRETRAINED_MODEL LOAD ---------------')
         for epoch in range(self.epochs):
             self.model.train()
             total_loss = 0
@@ -54,6 +71,15 @@ class FactorizationMachineModel:
                     total_loss = 0
 
             rmse_score = self.predict_train()
+
+            val_total_loss += rmse_score
+            val_n += 1
+            if minimum_loss > (val_total_loss/val_n):
+                minimum_loss = (val_total_loss/val_n)
+                if not os.path.exists('./models'):
+                    os.makedirs('./models')
+                torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
+            
             print('epoch:', epoch, 'validation: rmse:', rmse_score)
 
 
@@ -73,6 +99,9 @@ class FactorizationMachineModel:
     def predict(self, dataloader):
         self.model.eval()
         predicts = list()
+        if self.min_val_loss:
+            self.model.load_state_dict(torch.load('./models/{0}_{1}.pt'.format(self.save_time,self.model_name)))
+            print('--------------- MIN_VAL_LOSS STATE LOAD ---------------')
         with torch.no_grad():
             for fields in tqdm.tqdm(dataloader, smoothing=0, mininterval=1.0):
                 fields = fields[0].to(self.device)
@@ -103,9 +132,23 @@ class FieldAwareFactorizationMachineModel:
         self.model = _FieldAwareFactorizationMachineModel(self.field_dims, self.embed_dim).to(self.device)
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=self.learning_rate, amsgrad=True, weight_decay=self.weight_decay)
 
+        now = time.localtime()
+        now_date = time.strftime('%Y%m%d', now)
+        now_hour = time.strftime('%X', now)
+        self.save_time = now_date + '_' + now_hour.replace(':', '')
+        self.model_name = 'FFM_MODEL'
+        self.min_val_loss = args.MIN_VAL_LOSS
+        self.pretrained = args.PRETRAINED
+
 
     def train(self):
       # model: type, optimizer: torch.optim, train_dataloader: DataLoader, criterion: torch.nn, device: str, log_interval: int=100
+        minimum_loss = 999999999
+        val_total_loss = 0
+        val_n = 0
+        if self.pretrained is not None:
+            self.model.load_state_dict(torch.load(self.pretrained))
+            print('--------------- PRETRAINED_MODEL LOAD ---------------')
         for epoch in range(self.epochs):
             self.model.train()
             total_loss = 0
@@ -123,6 +166,15 @@ class FieldAwareFactorizationMachineModel:
                     total_loss = 0
 
             rmse_score = self.predict_train()
+
+            val_total_loss += rmse_score
+            val_n += 1
+            if minimum_loss > (val_total_loss/val_n):
+                minimum_loss = (val_total_loss/val_n)
+                if not os.path.exists('./models'):
+                    os.makedirs('./models')
+                torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
+            
             print('epoch:', epoch, 'validation: rmse:', rmse_score)
 
 
@@ -141,6 +193,9 @@ class FieldAwareFactorizationMachineModel:
     def predict(self, dataloader):
         self.model.eval()
         predicts = list()
+        if self.min_val_loss:
+            self.model.load_state_dict(torch.load('./models/{0}_{1}.pt'.format(self.save_time,self.model_name)))
+            print('--------------- MIN_VAL_LOSS STATE LOAD ---------------')
         with torch.no_grad():
             for fields in tqdm.tqdm(dataloader, smoothing=0, mininterval=1.0):
                 fields = fields[0].to(self.device)

@@ -83,11 +83,15 @@ class DeepCoNN:
         self.criterion = RMSELoss()
         self.epochs = args.EPOCHS
         self.model_name = 'text_model'
+        self.pretrained = args.PRETRAINED
 
 
     def train(self):
         minimum_loss = 999999999
         loss_list = []
+        if self.pretrained is not None:
+            self.model.load_state_dict(torch.load(self.pretrained))
+            print('--------------- PRETRAINED_MODEL LOAD ---------------')
         tk0 = tqdm.tqdm(range(self.epochs), smoothing=0, mininterval=1.0)
         for epoch in tk0:
             self.model.train()
