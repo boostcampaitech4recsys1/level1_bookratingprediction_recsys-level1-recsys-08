@@ -1,5 +1,6 @@
 images/
 *.jpg
 *.csv
+*.npy
 .DS_Store
 config/
