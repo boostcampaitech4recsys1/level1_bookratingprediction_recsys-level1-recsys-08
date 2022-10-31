@@ -135,6 +135,16 @@ def process_context_data(users, books, ratings1, ratings2):
 
     return idx, train_df, test_df
 
+# train에서 평점횟수가 1이하인 책 제거
+def remove_rating_under_cnt_one(train: pd.DataFrame) -> pd.DataFrame:
+    cnt_isbn_rating = train.groupby('isbn')['rating'].count()
+    cnt_isbn_rating = cnt_isbn_rating.to_frame()
+    delete_isbn = cnt_isbn_rating[cnt_isbn_rating['rating'] <= 1].index
+    index_isbn_df = train.set_index(keys=['isbn'], inplace=False)
+    index_isbn_df.drop(delete_isbn, axis=0, inplace=True)
+    train = index_isbn_df.reset_index().reindex(columns=['user_id','isbn','rating'])
+    
+    return train
 
 def context_data_load(args):
 
@@ -144,6 +154,8 @@ def context_data_load(args):
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
+
+    # train = remove_rating_under_cnt_one(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
