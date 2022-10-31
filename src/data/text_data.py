@@ -149,6 +149,7 @@ def text_data_load(args):
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
+    val = pd.read_csv(args.DATA_PATH + 'validation1.csv')
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -161,15 +162,19 @@ def text_data_load(args):
 
     train['user_id'] = train['user_id'].map(user2idx)
     sub['user_id'] = sub['user_id'].map(user2idx)
+    val['user_id'] = val['user_id'].map(user2idx)
 
     train['isbn'] = train['isbn'].map(isbn2idx)
     sub['isbn'] = sub['isbn'].map(isbn2idx)
+    val['isbn'] = val['isbn'].map(isbn2idx)
 
     text_train = process_text_data(train, books, user2idx, isbn2idx, args.DEVICE, train=True, user_summary_merge_vector=args.DEEPCONN_VECTOR_CREATE, item_summary_vector=args.DEEPCONN_VECTOR_CREATE)
+    text_valid = process_text_data(val, books, user2idx, isbn2idx, args.DEVICE, train=True, user_summary_merge_vector=args.DEEPCONN_VECTOR_CREATE, item_summary_vector=args.DEEPCONN_VECTOR_CREATE)
     text_test = process_text_data(test, books, user2idx, isbn2idx, args.DEVICE, train=False, user_summary_merge_vector=args.DEEPCONN_VECTOR_CREATE, item_summary_vector=args.DEEPCONN_VECTOR_CREATE)
 
     data = {
             'train':train,
+            'valid':val,
             'test':test,
             'users':users,
             'books':books,
@@ -186,14 +191,19 @@ def text_data_load(args):
 
 
 def text_data_split(args, data):
-    X_train, X_valid, y_train, y_valid = train_test_split(
-                                                        data['text_train'][['user_id', 'isbn', 'user_summary_merge_vector', 'item_summary_vector']],
-                                                        data['text_train']['rating'],
-                                                        test_size=args.TEST_SIZE,
-                                                        random_state=args.SEED,
-                                                        shuffle=True
-                                                        )
-    data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
+    # X_train, X_valid, y_train, y_valid = train_test_split(
+    #                                                     data['text_train'][['user_id', 'isbn', 'user_summary_merge_vector', 'item_summary_vector']],
+    #                                                     data['text_train']['rating'],
+    #                                                     test_size=args.TEST_SIZE,
+    #                                                     random_state=args.SEED,
+    #                                                     shuffle=True
+    #                                                     )
+    # data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
+    data['X_train']=data['train'][['user_id', 'isbn', 'user_summary_merge_vector', 'item_summary_vector']]
+    data['y_train']=data['train']['rating']
+
+    data['X_valid']=data['valid'][['user_id', 'isbn', 'user_summary_merge_vector', 'item_summary_vector']]
+    data['y_valid']=data['valid']['rating']
     return data
 
 
