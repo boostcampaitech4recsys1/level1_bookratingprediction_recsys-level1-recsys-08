@@ -4,7 +4,7 @@ import pandas as pd
 from omegaconf import OmegaConf
 from datetime import datetime
 
-from src import seed_everything
+from src import seed_everything, slack_post
 
 from src.data import context_data_load, context_data_split, context_data_loader
 from src.data import dl_data_load, dl_data_split, dl_data_loader
@@ -76,7 +76,7 @@ def main(args):
 
     ######################## TRAIN
     print(f'--------------- {args.MODEL} TRAINING ---------------')
-    model.train()
+    val_loss = model.train()
 
     ######################## INFERENCE
     print(f'--------------- {args.MODEL} PREDICT ---------------')
@@ -170,3 +170,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     main(args)
+    slack_post(parser, args, val_loss)
