@@ -140,8 +140,6 @@ def context_data_load(args):
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
     val = pd.read_csv(args.DATA_PATH + 'validation1.csv')
-    val.user_id = val.user_id.map(user2idx)
-    val.isbn = val.isbn.map(isbn2idx)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -156,11 +154,13 @@ def context_data_load(args):
     sub['user_id'] = sub['user_id'].map(user2idx)
     test['user_id'] = test['user_id'].map(user2idx)
     users['user_id'] = users['user_id'].map(user2idx)
+    val.user_id = val.user_id.map(user2idx)
 
     train['isbn'] = train['isbn'].map(isbn2idx)
     sub['isbn'] = sub['isbn'].map(isbn2idx)
     test['isbn'] = test['isbn'].map(isbn2idx)
     books['isbn'] = books['isbn'].map(isbn2idx)
+    val.isbn = val.isbn.map(isbn2idx)
 
     idx, context_train, context_test = process_context_data(users, books, train, test)
     field_dims = np.array([len(user2idx), len(isbn2idx),
