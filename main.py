@@ -107,7 +107,8 @@ def main(parser, args):
     print(f"Submit File Saved: {submit_file_path}")
 
     # slack post
-    slack_post(parser, args, val_loss)
+    if not args.NOSLACK:
+        slack_post(parser, args, val_loss)
 
 
 
@@ -125,6 +126,7 @@ if __name__ == "__main__":
     arg('--DATA_SHUFFLE', type=bool, default=True, help='데이터 셔플 여부를 조정할 수 있습니다.')
     arg('--TEST_SIZE', type=float, default=0.2, help='Train/Valid split 비율을 조정할 수 있습니다.')
     arg('--SEED', type=int, default=42, help='seed 값을 조정할 수 있습니다.')
+    arg('--NOSLACK', action='store_true', default=False , help='Slack 메시지 표시 안함.')
     
     ############### TRAINING OPTION
     arg('--BATCH_SIZE', type=int, default=1024, help='Batch size를 조정할 수 있습니다.')
