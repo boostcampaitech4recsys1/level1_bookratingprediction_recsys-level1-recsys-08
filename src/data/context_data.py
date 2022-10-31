@@ -73,6 +73,13 @@ def process_context_data(users, books, ratings1, ratings2):
     # books에 category_high 추가
     books = make_category_high(books)
 
+    # books의 book_author 전처리
+    books['book_author'] = books['book_author'].str.replace('.','', regex=True)
+    books['book_author'] = books['book_author'].str.replace('_',' ', regex=True)
+    books['book_author'] = books['book_author'].str.lower()
+    books['book_author'] = books['book_author'].apply(lambda x:' '.join(sorted(x.split())))
+    print("it works")
+
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
     # 인덱싱 처리된 데이터 조인
