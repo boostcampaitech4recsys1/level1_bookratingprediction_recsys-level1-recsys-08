@@ -1,4 +1,4 @@
-import time
+import time, os
 import argparse
 import pandas as pd
 from omegaconf import OmegaConf
@@ -101,6 +101,7 @@ def main(args):
     now_date = time.strftime('%Y%m%d', now)
     now_hour = time.strftime('%X', now)
     save_time = now_date + '_' + now_hour.replace(':', '')
+    os.makedirs('submit', exist_ok=True)
     submit_file_path = 'submit/{}_{}.csv'.format(save_time, args.MODEL)
     submission.to_csv(submit_file_path, index=False)
     print(f"Submit File Saved: {submit_file_path}")
