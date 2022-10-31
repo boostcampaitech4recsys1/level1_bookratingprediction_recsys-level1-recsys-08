@@ -17,7 +17,7 @@ from src import CNN_FM
 from src import DeepCoNN
 
 
-def main(args):
+def main(parser, args):
     seed_everything(args.SEED)
 
     ######################## DATA LOAD
@@ -106,6 +106,10 @@ def main(args):
     submission.to_csv(submit_file_path, index=False)
     print(f"Submit File Saved: {submit_file_path}")
 
+    # slack post
+    slack_post(parser, args, val_loss)
+
+
 
 
 if __name__ == "__main__":
@@ -169,5 +173,4 @@ if __name__ == "__main__":
     arg('--DEEPCONN_OUT_DIM', type=int, default=32, help='DEEP_CONN에서 1D conv의 출력 크기를 조정할 수 있습니다.')
 
     args = parser.parse_args()
-    main(args)
-    slack_post(parser, args, val_loss)
+    main(parser, args)
