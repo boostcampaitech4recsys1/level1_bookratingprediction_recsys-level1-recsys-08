@@ -50,8 +50,8 @@ def process_text_data(df, books, user2idx, isbn2idx, device, train=False, user_s
         df_['user_id'] = df_['user_id'].map(user2idx)
         df_['isbn'] = df_['isbn'].map(isbn2idx)
 
-    df_ = pd.merge(df_, books_[['isbn', 'book_title', 'summary']], on='isbn', how='left')
-    df_['summary'].fillna(df_.book_title, inplace=True)
+    df_ = pd.merge(df_, books_[['isbn', 'summary']], on='isbn', how='left')
+    df_['summary'].fillna('None', inplace=True)
     df_['summary'] = df_['summary'].apply(lambda x:text_preprocessing(x))
     df_['summary'].replace({'':'None', ' ':'None'}, inplace=True)
     df_['summary_length'] = df_['summary'].apply(lambda x:len(x))
@@ -74,9 +74,9 @@ def process_text_data(df, books, user2idx, isbn2idx, device, train=False, user_s
         if not os.path.exists('./data/text_vector'):
             os.makedirs('./data/text_vector')
         if train == True:
-            np.save('./data/text_vector/train_user_summary_merge_vector_process.npy', vector)
+            np.save('./data/text_vector/train_user_summary_merge_vector.npy', vector)
         else:
-            np.save('./data/text_vector/test_user_summary_merge_vector_process.npy', vector)
+            np.save('./data/text_vector/test_user_summary_merge_vector.npy', vector)
 
         print('Create Item Summary Vector')
         item_summary_vector_list = []
@@ -94,24 +94,24 @@ def process_text_data(df, books, user2idx, isbn2idx, device, train=False, user_s
         if not os.path.exists('./data/text_vector'):
             os.makedirs('./data/text_vector')
         if train == True:
-            np.save('./data/text_vector/train_item_summary_vector_process.npy', vector)
+            np.save('./data/text_vector/train_item_summary_vector.npy', vector)
         else:
-            np.save('./data/text_vector/test_item_summary_vector_process.npy', vector)
+            np.save('./data/text_vector/test_item_summary_vector.npy', vector)
     else:
         print('Check Vectorizer')
         print('Vector Load')
         if train == True:
-            user = np.load('data/text_vector/train_user_summary_merge_vector_process.npy', allow_pickle=True)
+            user = np.load('data/text_vector/train_user_summary_merge_vector.npy', allow_pickle=True)
         else:
-            user = np.load('data/text_vector/test_user_summary_merge_vector_process.npy', allow_pickle=True)
+            user = np.load('data/text_vector/test_user_summary_merge_vector.npy', allow_pickle=True)
         user_review_text_df = pd.DataFrame([user[0], user[1]]).T
         user_review_text_df.columns = ['user_id', 'user_summary_merge_vector']
         user_review_text_df['user_id'] = user_review_text_df['user_id'].astype('int')
 
         if train == True:
-            item = np.load('data/text_vector/train_item_summary_vector_process.npy', allow_pickle=True)
+            item = np.load('data/text_vector/train_item_summary_vector.npy', allow_pickle=True)
         else:
-            item = np.load('data/text_vector/test_item_summary_vector_process.npy', allow_pickle=True)
+            item = np.load('data/text_vector/test_item_summary_vector.npy', allow_pickle=True)
         books_text_df = pd.DataFrame([item[0], item[1]]).T
         books_text_df.columns = ['isbn', 'item_summary_vector']
         books_text_df['isbn'] = books_text_df['isbn'].astype('int')
@@ -149,7 +149,7 @@ def text_data_load(args):
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
-    val = pd.read_csv(args.DATA_PATH + 'validation1.csv')
+    val = pd.read_csv(args.DATA_PATH + 'ffm_validation.csv')
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -170,7 +170,10 @@ def text_data_load(args):
 
     text_train = process_text_data(train, books, user2idx, isbn2idx, args.DEVICE, train=True, user_summary_merge_vector=args.DEEPCONN_VECTOR_CREATE, item_summary_vector=args.DEEPCONN_VECTOR_CREATE)
     text_test = process_text_data(test, books, user2idx, isbn2idx, args.DEVICE, train=False, user_summary_merge_vector=args.DEEPCONN_VECTOR_CREATE, item_summary_vector=args.DEEPCONN_VECTOR_CREATE)
+    # pred csv를 val set으로 사용하는 경우
     text_valid = text_test.drop('rating', axis=1).merge(val, on=['user_id','isbn'])
+    # train을 val set으로 사용하는 경우
+    # text_valid =  text_train[text_train.user_id.isin(text_test.user_id)].reset_index(drop=True)
     data = {
             'train':train,
             'valid':val,
