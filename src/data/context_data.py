@@ -59,6 +59,14 @@ def make_category_high(books:pd.DataFrame) -> pd.DataFrame:
     books.loc[books[books['category_high'].isin(others_list)].index, 'category_high']='others'
     return books
 
+def preprocessing_book_author(books:pd.DataFrame) -> pd.DataFrame:
+    books['book_author'] = books['book_author'].str.replace('.','', regex=True)
+    books['book_author'] = books['book_author'].str.replace('_',' ', regex=True)
+    books['book_author'] = books['book_author'].str.lower()
+    books['book_author'] = books['book_author'].apply(lambda x:' '.join(sorted(x.split())))
+
+    return books
+
 
 def process_context_data(users, books, ratings1, ratings2):
     location_set = {'location_city','location_state','location_country'}
@@ -74,11 +82,7 @@ def process_context_data(users, books, ratings1, ratings2):
     books = make_category_high(books)
 
     # books의 book_author 전처리
-    books['book_author'] = books['book_author'].str.replace('.','', regex=True)
-    books['book_author'] = books['book_author'].str.replace('_',' ', regex=True)
-    books['book_author'] = books['book_author'].str.lower()
-    books['book_author'] = books['book_author'].apply(lambda x:' '.join(sorted(x.split())))
-    print("it works")
+    books = preprocessing_book_author(books)
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
