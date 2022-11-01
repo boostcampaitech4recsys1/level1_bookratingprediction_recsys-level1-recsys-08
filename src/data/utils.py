@@ -1,0 +1,66 @@
+import re
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+import torch
+import torch.nn as nn
+from torch.utils.data import TensorDataset, DataLoader, Dataset
+
+# books에 category_high를 추가해주는 코드
+def make_category_high(books:pd.DataFrame) -> pd.DataFrame:
+    books.loc[books[books['category'].notnull()].index, 'category'] = books[books['category'].notnull()]['category'].apply(lambda x: re.sub('[\W_]+',' ',x).strip())
+    books['category'] = books['category'].str.lower()
+    categories = ['garden','crafts','physics','adventure','music','fiction','nonfiction','science','science fiction','social','homicide',
+    'sociology','disease','religion','christian','philosophy','psycholog','mathemat','agricult','environmental',
+    'business','poetry','drama','literary','travel','motion picture','children','cook','literature','electronic',
+    'humor','animal','bird','photograph','computer','house','ecology','family','architect','camp','criminal','language','india']
+
+    books['category_high'] = books['category'].copy()
+    for category in categories:
+        books.loc[books[books['category'].str.contains(category,na=False)].index,'category_high'] = category
+        
+    category_high_df = pd.DataFrame(books['category_high'].value_counts()).reset_index()
+    category_high_df.columns = ['category','count']
+    others_list = category_high_df[category_high_df['count']<5]['category'].values
+    books.loc[books[books['category_high'].isin(others_list)].index, 'category_high']='others'
+    return books
+
+
+# 작가 preprocessing
+def preprocessing_book_author(books:pd.DataFrame) -> pd.DataFrame:
+    books['book_author'] = books['book_author'].str.replace('.','', regex=True)
+    books['book_author'] = books['book_author'].str.replace('_',' ', regex=True)
+    books['book_author'] = books['book_author'].str.lower()
+    books['book_author'] = books['book_author'].apply(lambda x:' '.join(sorted(x.split())))
+    return books
+
+# train에서 평점횟수가 1이하인 책 값 보정
+def edit_once_rating(train: pd.DataFrame) -> pd.DataFrame:
+    total_avg = train['rating'].mean()
+    cnt_isbn_rating = train.groupby('isbn')['rating'].count()
+    cnt_isbn_rating = cnt_isbn_rating.to_frame()
+    rating_time = train['isbn'].value_counts()
+    rating_time.to_frame()
+    rating_time = rating_time.reset_index().rename(columns={'index':'isbn', 'isbn':'cnt'})
+    rating_time['cnt']=rating_time['cnt'].astype(str)
+    tmp = train.merge(rating_time, how="left", on="isbn")
+    tmp.loc[tmp['cnt'] == '1', 'rating'] = tmp['rating']-(tmp['rating']-total_avg)*0.5831
+    train = tmp.drop(['cnt'], axis=1)
+    return train
+
+# 미션 1 출판사명 수정함수(country nan 행에 대해)
+def publisher_modify(books):
+    publisher_dict=(books['publisher'].value_counts()).to_dict()
+    publisher_count_df= pd.DataFrame(list(publisher_dict.items()),columns = ['publisher','count'])
+
+    publisher_count_df = publisher_count_df.sort_values(by=['count'], ascending = False)
+    
+    modify_list = publisher_count_df[publisher_count_df['count']>1].publisher.values
+    
+    for publisher in modify_list:
+        try:
+            number = books[books['publisher']==publisher]['isbn'].apply(lambda x: x[:4]).value_counts().index[0]
+            right_publisher = books[books['isbn'].apply(lambda x: x[:4])==number]['publisher'].value_counts().index[0]
+            books.loc[books[books['isbn'].apply(lambda x: x[:4])==number].index,'publisher'] = right_publisher
+        except: 
+            pass
