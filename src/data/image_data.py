@@ -64,6 +64,7 @@ def image_data_load(args):
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
+    val = pd.read_csv(args.DATA_PATH + '20221031_102515_FFM-20221027_052259_CNN_FM-20221027_115425_DeepCoNN-batch256_NCF-sw-0.5-0.3-0.1-0.1.csv')
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -81,8 +82,8 @@ def image_data_load(args):
     sub['isbn'] = sub['isbn'].map(isbn2idx)
 
     img_train = process_img_data(train, books, user2idx, isbn2idx, train=True)
+    img_val = process_img_data(val, books, user2idx, isbn2idx, train=False)
     img_test = process_img_data(test, books, user2idx, isbn2idx, train=False)
-
     data = {
             'train':train,
             'test':test,
@@ -95,20 +96,26 @@ def image_data_load(args):
             'isbn2idx':isbn2idx,
             'img_train':img_train,
             'img_test':img_test,
+            'img_valid':img_val,
             }
 
     return data
 
 
 def image_data_split(args, data):
-    X_train, X_valid, y_train, y_valid = train_test_split(
-                                                        data['img_train'][['user_id', 'isbn', 'img_vector']],
-                                                        data['img_train']['rating'],
-                                                        test_size=args.TEST_SIZE,
-                                                        random_state=args.SEED,
-                                                        shuffle=True
-                                                        )
-    data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
+    # X_train, X_valid, y_train, y_valid = train_test_split(
+    #                                                     data['img_train'][['user_id', 'isbn', 'img_vector']],
+    #                                                     data['img_train']['rating'],
+    #                                                     test_size=args.TEST_SIZE,
+    #                                                     random_state=args.SEED,
+    #                                                     shuffle=True
+    #                                                     )
+    # data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
+    data['X_train']=data['img_train'][['user_id', 'isbn', 'img_vector']]
+    data['y_train']=data['img_train']['rating']
+
+    data['X_valid']=data['img_valid'][['user_id', 'isbn', 'img_vector']]
+    data['y_valid']=data['img_valid']['rating']
     return data
 
 
