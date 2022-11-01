@@ -45,7 +45,10 @@ def process_context_data(users, books, ratings1, ratings2):
     books.loc[books.year_of_publication<1900, 'year_of_publication'] = [1980, 1956, 1971]
 
     # books의 book_author 전처리
-    # books = preprocessing_book_author(books)
+    books = preprocessing_book_author(books)
+
+    # language 처리 
+    # books.loc[books.language!='en','language']='others'
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
@@ -106,14 +109,14 @@ def context_data_load(args):
 
     ######################## DATA LOAD
     users = pd.read_csv(args.DATA_PATH + 'users_location.csv')
-    books = pd.read_csv(args.DATA_PATH + 'books.csv')
+    books = pd.read_csv(args.DATA_PATH + 'books_publisher.csv')
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
     val = pd.read_csv(args.DATA_PATH + 'validation1.csv')
 
     # 한번만 평가받은 책의 rating 보정
-    train = edit_once_rating(train)
+    # train = edit_once_rating(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
