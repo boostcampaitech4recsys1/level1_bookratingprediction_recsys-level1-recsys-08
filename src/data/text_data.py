@@ -50,8 +50,8 @@ def process_text_data(df, books, user2idx, isbn2idx, device, train=False, user_s
         df_['user_id'] = df_['user_id'].map(user2idx)
         df_['isbn'] = df_['isbn'].map(isbn2idx)
 
-    df_ = pd.merge(df_, books_[['isbn', 'summary']], on='isbn', how='left')
-    df_['summary'].fillna('None', inplace=True)
+    df_ = pd.merge(df_, books_[['isbn', 'book_title', 'summary']], on='isbn', how='left')
+    df_['summary'].fillna(df_.book_title, inplace=True)
     df_['summary'] = df_['summary'].apply(lambda x:text_preprocessing(x))
     df_['summary'].replace({'':'None', ' ':'None'}, inplace=True)
     df_['summary_length'] = df_['summary'].apply(lambda x:len(x))
@@ -74,9 +74,9 @@ def process_text_data(df, books, user2idx, isbn2idx, device, train=False, user_s
         if not os.path.exists('./data/text_vector'):
             os.makedirs('./data/text_vector')
         if train == True:
-            np.save('./data/text_vector/train_user_summary_merge_vector.npy', vector)
+            np.save('./data/text_vector/train_user_summary_merge_vector_process.npy', vector)
         else:
-            np.save('./data/text_vector/test_user_summary_merge_vector.npy', vector)
+            np.save('./data/text_vector/test_user_summary_merge_vector_process.npy', vector)
 
         print('Create Item Summary Vector')
         item_summary_vector_list = []
@@ -94,24 +94,24 @@ def process_text_data(df, books, user2idx, isbn2idx, device, train=False, user_s
         if not os.path.exists('./data/text_vector'):
             os.makedirs('./data/text_vector')
         if train == True:
-            np.save('./data/text_vector/train_item_summary_vector.npy', vector)
+            np.save('./data/text_vector/train_item_summary_vector_process.npy', vector)
         else:
-            np.save('./data/text_vector/test_item_summary_vector.npy', vector)
+            np.save('./data/text_vector/test_item_summary_vector_process.npy', vector)
     else:
         print('Check Vectorizer')
         print('Vector Load')
         if train == True:
-            user = np.load('data/text_vector/train_user_summary_merge_vector.npy', allow_pickle=True)
+            user = np.load('data/text_vector/train_user_summary_merge_vector_process.npy', allow_pickle=True)
         else:
-            user = np.load('data/text_vector/test_user_summary_merge_vector.npy', allow_pickle=True)
+            user = np.load('data/text_vector/test_user_summary_merge_vector_process.npy', allow_pickle=True)
         user_review_text_df = pd.DataFrame([user[0], user[1]]).T
         user_review_text_df.columns = ['user_id', 'user_summary_merge_vector']
         user_review_text_df['user_id'] = user_review_text_df['user_id'].astype('int')
 
         if train == True:
-            item = np.load('data/text_vector/train_item_summary_vector.npy', allow_pickle=True)
+            item = np.load('data/text_vector/train_item_summary_vector_process.npy', allow_pickle=True)
         else:
-            item = np.load('data/text_vector/test_item_summary_vector.npy', allow_pickle=True)
+            item = np.load('data/text_vector/test_item_summary_vector_process.npy', allow_pickle=True)
         books_text_df = pd.DataFrame([item[0], item[1]]).T
         books_text_df.columns = ['isbn', 'item_summary_vector']
         books_text_df['isbn'] = books_text_df['isbn'].astype('int')
@@ -169,9 +169,8 @@ def text_data_load(args):
     val['isbn'] = val['isbn'].map(isbn2idx)
 
     text_train = process_text_data(train, books, user2idx, isbn2idx, args.DEVICE, train=True, user_summary_merge_vector=args.DEEPCONN_VECTOR_CREATE, item_summary_vector=args.DEEPCONN_VECTOR_CREATE)
-    text_valid = process_text_data(val, books, user2idx, isbn2idx, args.DEVICE, train=True, user_summary_merge_vector=args.DEEPCONN_VECTOR_CREATE, item_summary_vector=args.DEEPCONN_VECTOR_CREATE)
     text_test = process_text_data(test, books, user2idx, isbn2idx, args.DEVICE, train=False, user_summary_merge_vector=args.DEEPCONN_VECTOR_CREATE, item_summary_vector=args.DEEPCONN_VECTOR_CREATE)
-
+    text_valid = text_test.drop('rating', axis=1).merge(val, on=['user_id','isbn'])
     data = {
             'train':train,
             'valid':val,
@@ -185,6 +184,7 @@ def text_data_load(args):
             'isbn2idx':isbn2idx,
             'text_train':text_train,
             'text_test':text_test,
+            'text_valid':text_valid,
             }
 
     return data
@@ -199,11 +199,11 @@ def text_data_split(args, data):
     #                                                     shuffle=True
     #                                                     )
     # data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
-    data['X_train']=data['train'][['user_id', 'isbn', 'user_summary_merge_vector', 'item_summary_vector']]
-    data['y_train']=data['train']['rating']
+    data['X_train']=data['text_train'][['user_id', 'isbn', 'user_summary_merge_vector', 'item_summary_vector']]
+    data['y_train']=data['text_train']['rating']
 
-    data['X_valid']=data['valid'][['user_id', 'isbn', 'user_summary_merge_vector', 'item_summary_vector']]
-    data['y_valid']=data['valid']['rating']
+    data['X_valid']=data['text_valid'][['user_id', 'isbn', 'user_summary_merge_vector', 'item_summary_vector']]
+    data['y_valid']=data['text_valid']['rating']
     return data
 
 
