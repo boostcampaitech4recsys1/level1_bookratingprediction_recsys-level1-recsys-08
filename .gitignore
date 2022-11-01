@@ -6,7 +6,7 @@ images/
 .ipynb_checkpoints
 *__pycache__
 config/
-
+*.yaml
 __pycache__/
 .env
 *.pt
