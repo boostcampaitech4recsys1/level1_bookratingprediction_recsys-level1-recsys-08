@@ -70,14 +70,14 @@ def publisher_modify(books):
 
 # location 수정함수 (country nan 행에 대해) : 미션 1
 def location_modify_country(users: pd.DataFrame) -> pd.DataFrame:
-    users = users.replace('na', np.nan, regex=True) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
-    users = users.replace('', np.nan, regex=True) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
+    users = users.replace('na', np.nan) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
+    users = users.replace('', np.nan) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
     modify_location = users[(users['location_country'].isna())&(users['location_city'].notnull())]['location_city'].values
 
     location_list = []
     for location in modify_location:
         try:
-            right_location = users[(users['location'].str.contains(location))&(users['location_country'].notnull())]['location'].value_counts().index[0]
+            right_location = users[(users['location'].str.contains(location, regex=False))&(users['location_country'].notnull())]['location'].value_counts().index[0]
             location_list.append(right_location)
         except:
             pass
@@ -90,14 +90,14 @@ def location_modify_country(users: pd.DataFrame) -> pd.DataFrame:
 
 # location 수정함수 (state nan 행에 대해)
 def location_modify_state(users: pd.DataFrame) -> pd.DataFrame:
-    users = users.replace('na', np.nan, regex=True) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
-    users = users.replace('', np.nan, regex=True) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
+    users = users.replace('na', np.nan) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
+    users = users.replace('', np.nan) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
     modify_location = users[(users['location_state'].isna())&(users['location_city'].notnull())]['location_city'].values
 
     location_list = []
     for location in modify_location:
         try:
-            right_location = users[(users['location'].str.contains(location))&(users['location_state'].notnull())]['location'].value_counts().index[0]
+            right_location = users[(users['location'].str.contains(location, regex=False))&(users['location_state'].notnull())]['location'].value_counts().index[0]
             location_list.append(right_location)
         except:
             pass

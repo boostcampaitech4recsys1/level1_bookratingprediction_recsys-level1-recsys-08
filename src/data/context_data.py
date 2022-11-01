@@ -34,7 +34,7 @@ def process_context_data(users, books, ratings1, ratings2):
         users['location_city'] = users['location'].apply(lambda x: x.split(',')[0].strip())
         users['location_state'] = users['location'].apply(lambda x: x.split(',')[1].strip())
         users['location_country'] = users['location'].apply(lambda x: x.split(',')[2].strip())
-        # location 전처리
+        # location 전처리, 주의❗️ 아래의 두 함수를 호출하면 데이터 로드가 약 1분 30초가 소요됨.
         # users = location_modify_country(users)
         # users = location_modify_state(users)
     users = users.drop(['location'], axis=1)
