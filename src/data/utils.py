@@ -34,6 +34,7 @@ def preprocessing_book_author(books:pd.DataFrame) -> pd.DataFrame:
     books['book_author'] = books['book_author'].apply(lambda x:' '.join(sorted(x.split())))
     return books
 
+
 # train에서 평점횟수가 1이하인 책 값 보정
 def edit_once_rating(train: pd.DataFrame) -> pd.DataFrame:
     total_avg = train['rating'].mean()
@@ -48,7 +49,8 @@ def edit_once_rating(train: pd.DataFrame) -> pd.DataFrame:
     train = tmp.drop(['cnt'], axis=1)
     return train
 
-# 미션 1 출판사명 수정함수(country nan 행에 대해)
+
+# 미션 1 출판사명 수정함수
 def publisher_modify(books):
     publisher_dict=(books['publisher'].value_counts()).to_dict()
     publisher_count_df= pd.DataFrame(list(publisher_dict.items()),columns = ['publisher','count'])
@@ -64,3 +66,42 @@ def publisher_modify(books):
             books.loc[books[books['isbn'].apply(lambda x: x[:4])==number].index,'publisher'] = right_publisher
         except: 
             pass
+
+
+# location 수정함수 (country nan 행에 대해) : 미션 1
+def location_modify_country(users: pd.DataFrame) -> pd.DataFrame:
+    users = users.replace('na', np.nan, regex=True) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
+    users = users.replace('', np.nan, regex=True) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
+    modify_location = users[(users['location_country'].isna())&(users['location_city'].notnull())]['location_city'].values
+
+    location_list = []
+    for location in modify_location:
+        try:
+            right_location = users[(users['location'].str.contains(location))&(users['location_country'].notnull())]['location'].value_counts().index[0]
+            location_list.append(right_location)
+        except:
+            pass
+    
+    for location in location_list:
+        users.loc[users[users['location_city']==location.split(',')[0]].index,'location_state'] = location.split(',')[1]
+        users.loc[users[users['location_city']==location.split(',')[0]].index,'location_country'] = location.split(',')[2]
+    return users
+
+
+# location 수정함수 (state nan 행에 대해)
+def location_modify_state(users: pd.DataFrame) -> pd.DataFrame:
+    users = users.replace('na', np.nan, regex=True) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
+    users = users.replace('', np.nan, regex=True) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
+    modify_location = users[(users['location_state'].isna())&(users['location_city'].notnull())]['location_city'].values
+
+    location_list = []
+    for location in modify_location:
+        try:
+            right_location = users[(users['location'].str.contains(location))&(users['location_state'].notnull())]['location'].value_counts().index[0]
+            location_list.append(right_location)
+        except:
+            pass
+    for location in location_list:
+        users.loc[users[users['location_city']==location.split(',')[0]].index,'location_state'] = location.split(',')[1]
+        users.loc[users[users['location_city']==location.split(',')[0]].index,'location_country'] = location.split(',')[2]
+    return users

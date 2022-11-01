@@ -5,7 +5,10 @@ from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader, Dataset
-from .utils import make_category_high, preprocessing_book_author, edit_once_rating, publisher_modify
+from .utils import make_category_high, preprocessing_book_author, \
+                    edit_once_rating, publisher_modify, \
+                    location_modify_country, location_modify_state
+
 
 def age_map(x: int) -> int:
     x = int(x)
@@ -28,9 +31,12 @@ def process_context_data(users, books, ratings1, ratings2):
     if len(set(users.columns).intersection(location_set))==3: # 기존 users에 city, state, country가 존재한다면,
         pass
     else:
-        users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
-        users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
-        users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
+        users['location_city'] = users['location'].apply(lambda x: x.split(',')[0].strip())
+        users['location_state'] = users['location'].apply(lambda x: x.split(',')[1].strip())
+        users['location_country'] = users['location'].apply(lambda x: x.split(',')[2].strip())
+        # location 전처리
+        # users = location_modify_country(users)
+        # users = location_modify_state(users)
     users = users.drop(['location'], axis=1)
     
     # books에 category_high 추가
@@ -38,6 +44,7 @@ def process_context_data(users, books, ratings1, ratings2):
 
     # books의 book_author 전처리
     books = preprocessing_book_author(books)
+
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
@@ -104,7 +111,7 @@ def context_data_load(args):
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
     # 한번만 평가받은 책의 rating 보정
-    # train = edit_once_rating(train)
+    train = edit_once_rating(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
