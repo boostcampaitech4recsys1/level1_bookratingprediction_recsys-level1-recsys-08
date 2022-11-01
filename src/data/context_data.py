@@ -34,15 +34,15 @@ def process_context_data(users, books, ratings1, ratings2):
         users['location_city'] = users['location'].apply(lambda x: x.split(',')[0].strip())
         users['location_state'] = users['location'].apply(lambda x: x.split(',')[1].strip())
         users['location_country'] = users['location'].apply(lambda x: x.split(',')[2].strip())
-        # location 전처리, 주의❗️ 아래의 두 함수를 호출하면 데이터 로드가 약 1분 30초가 소요됨.
+        # 🍁🍁🍁 location 전처리, 주의❗️ 아래의 두 함수를 호출하면 데이터 로드가 약 1분 30초가 소요됨.
         # users = location_modify_country(users)
         # users = location_modify_state(users)
     users = users.drop(['location'], axis=1)
     
-    # books에 category_high 추가
+    # 🍁🍁🍁 books에 category_high 추가
     books = make_category_high(books)
 
-    # books의 book_author 전처리
+    # 🍁🍁🍁 books의 book_author 전처리
     books = preprocessing_book_author(books)
 
 
@@ -110,7 +110,7 @@ def context_data_load(args):
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
-    # 한번만 평가받은 책의 rating 보정
+    # 🍁🍁🍁 한번만 평가받은 책의 rating 보정
     train = edit_once_rating(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
