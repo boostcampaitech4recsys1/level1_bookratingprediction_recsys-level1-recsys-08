@@ -47,11 +47,6 @@ def process_context_data(users, books, ratings1, ratings2):
     # books의 book_author 전처리
     books = preprocessing_book_author(books)
 
-
-    # books의 book_author 전처리
-    books = preprocessing_book_author(books)
-
-
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
     # 인덱싱 처리된 데이터 조인
