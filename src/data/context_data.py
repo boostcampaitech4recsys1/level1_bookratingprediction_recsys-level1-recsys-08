@@ -136,7 +136,7 @@ def process_context_data(users, books, ratings1, ratings2):
     return idx, train_df, test_df
 
 # train에서 평점횟수가 1이하인 책 값 보정
-def remove_rating_under_cnt_one(train: pd.DataFrame) -> pd.DataFrame:
+def edit_once_rating(train: pd.DataFrame) -> pd.DataFrame:
     total_avg = train['rating'].mean()
     cnt_isbn_rating = train.groupby('isbn')['rating'].count()
     cnt_isbn_rating = cnt_isbn_rating.to_frame()
@@ -159,7 +159,7 @@ def context_data_load(args):
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
-    # train = remove_rating_under_cnt_one(train)
+    # train = edit_once_rating(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
