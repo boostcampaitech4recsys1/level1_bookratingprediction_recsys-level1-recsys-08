@@ -149,7 +149,7 @@ def text_data_load(args):
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
-    val = pd.read_csv(args.DATA_PATH + 'ffm_validation.csv')
+    val = pd.read_csv(args.DATA_PATH + '20221031_102515_FFM-20221027_052259_CNN_FM-20221027_115425_DeepCoNN-batch256_NCF-sw-0.5-0.3-0.1-0.1.csv')
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -173,7 +173,7 @@ def text_data_load(args):
     # pred csv를 val set으로 사용하는 경우
     text_valid = text_test.drop('rating', axis=1).merge(val, on=['user_id','isbn'])
     # train을 val set으로 사용하는 경우
-    # text_valid =  text_train[text_train.user_id.isin(text_test.user_id)].reset_index(drop=True)
+    # text_valid = text_train[text_train.user_id.isin(text_test.user_id)].reset_index(drop=True)
     data = {
             'train':train,
             'valid':val,
