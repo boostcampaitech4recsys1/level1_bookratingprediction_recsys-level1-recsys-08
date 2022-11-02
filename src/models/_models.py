@@ -218,7 +218,10 @@ class CrossNetwork(nn.Module):
         """
         :param x: Float tensor of size ``(batch_size, num_fields, embed_dim)``
         """
-        x0 = x
+        ##
+        # x = fun(x.shape[1], 32)
+        ##
+        x0 = x # [1024,48] // 원레는 [1024,32]
         for i in range(self.num_layers):
             xw = self.w[i](x)
             x = x0 * xw + self.b[i] + x
