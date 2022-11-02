@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
     ############### NCF
     arg('--NCF_EMBED_DIM', type=int, default=16, help='NCF에서 embedding시킬 차원을 조정할 수 있습니다.')
-    arg('--NCF_MLP_DIMS', type=list, default=(16, 16), help='NCF에서 MLP Network의 차원을 조정할 수 있습니다.')
+    arg('--NCF_MLP_DIMS', type=int, nargs='+', default=(16, 16), help='NCF에서 MLP Network의 차원을 조정할 수 있습니다.')
     arg('--NCF_DROPOUT', type=float, default=0.2, help='NCF에서 Dropout rate를 조정할 수 있습니다.')
 
     ############### WDN
@@ -157,7 +157,7 @@ if __name__ == "__main__":
 
     ############### DCN
     arg('--DCN_EMBED_DIM', type=int, default=16, help='DCN에서 embedding시킬 차원을 조정할 수 있습니다.')
-    arg('--DCN_MLP_DIMS', type=list, default=(16, 16), help='DCN에서 MLP Network의 차원을 조정할 수 있습니다.')
+    arg('--DCN_MLP_DIMS', type=int, nargs='+', default=(16, 16), help='DCN에서 MLP Network의 차원을 조정할 수 있습니다.')
     arg('--DCN_DROPOUT', type=float, default=0.2, help='DCN에서 Dropout rate를 조정할 수 있습니다.')
     arg('--DCN_NUM_LAYERS', type=int, default=3, help='DCN에서 Cross Network의 레이어 수를 조정할 수 있습니다.')
 
