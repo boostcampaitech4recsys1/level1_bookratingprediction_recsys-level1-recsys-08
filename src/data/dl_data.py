@@ -13,14 +13,6 @@ def dl_data_load(args):
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
-    # val = pd.read_csv(args.DATA_PATH + 'validation1.csv')
-    val = pd.read_csv(args.DATA_PATH + 'ensemble_train_random_validation3.csv')
-    # val = pd.read_csv(args.DATA_PATH + 'ensemble_random_sampling2.csv')
-    # train/test split
-    train = train.merge(val,how='left', on=['user_id','isbn'])
-    train = train[train.rating_y.isna()]
-    train = train.iloc[:,:3]
-    train.columns = ['user_id','isbn','rating']
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -32,12 +24,10 @@ def dl_data_load(args):
     isbn2idx = {isbn:idx for idx, isbn in idx2isbn.items()}
 
     train['user_id'] = train['user_id'].map(user2idx)
-    val['user_id'] = val['user_id'].map(user2idx)
     sub['user_id'] = sub['user_id'].map(user2idx)
     test['user_id'] = test['user_id'].map(user2idx)
 
     train['isbn'] = train['isbn'].map(isbn2idx)
-    val['isbn'] = val['isbn'].map(isbn2idx)
     sub['isbn'] = sub['isbn'].map(isbn2idx)
     test['isbn'] = test['isbn'].map(isbn2idx)
 
@@ -45,7 +35,6 @@ def dl_data_load(args):
 
     data = {
             'train':train,
-            'valid':val,
             'test':test.drop(['rating'], axis=1),
             'field_dims':field_dims,
             'users':users,
@@ -61,19 +50,14 @@ def dl_data_load(args):
     return data
 
 def dl_data_split(args, data):
-    # X_train, X_valid, y_train, y_valid = train_test_split(
-    #                                                     data['train'].drop(['rating'], axis=1),
-    #                                                     data['train']['rating'],
-    #                                                     test_size=args.TEST_SIZE,
-    #                                                     random_state=args.SEED,
-    #                                                     shuffle=True
-    #                                                     )
-    # data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
-    data['X_train']=data['train'].drop(['rating'], axis=1)
-    data['y_train']=data['train']['rating']
-
-    data['X_valid']=data['valid'].drop(['rating'], axis=1)
-    data['y_valid']=data['valid']['rating']
+    X_train, X_valid, y_train, y_valid = train_test_split(
+                                                        data['train'].drop(['rating'], axis=1),
+                                                        data['train']['rating'],
+                                                        test_size=args.TEST_SIZE,
+                                                        random_state=args.SEED,
+                                                        shuffle=True
+                                                        )
+    data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
     return data
 
 def dl_data_loader(args, data):

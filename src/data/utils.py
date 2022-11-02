@@ -39,11 +39,9 @@ def preprocessing_book_author(books:pd.DataFrame) -> pd.DataFrame:
     return books
 
 
-# train에서 평점횟수가 1이하인 책 값 보정
-def edit_once_rating(train: pd.DataFrame) -> pd.DataFrame:
+# train에서 평점횟수가 1이하인 책 rating 보정
+def edit_once_rated_book(train: pd.DataFrame) -> pd.DataFrame:
     total_avg = train['rating'].mean()
-    cnt_isbn_rating = train.groupby('isbn')['rating'].count()
-    cnt_isbn_rating = cnt_isbn_rating.to_frame()
     rating_time = train['isbn'].value_counts()
     rating_time.to_frame()
     rating_time = rating_time.reset_index().rename(columns={'index':'isbn', 'isbn':'cnt'})
@@ -53,6 +51,17 @@ def edit_once_rating(train: pd.DataFrame) -> pd.DataFrame:
     train = tmp.drop(['cnt'], axis=1)
     return train
 
+# train에서 평점횟수가 1이하인 유저의 rating 보정
+def edit_once_rated_user(train: pd.DataFrame) -> pd.DataFrame:
+    total_avg = train['rating'].mean()
+    rating_time = train['user_id'].value_counts()
+    rating_time.to_frame()
+    rating_time = rating_time.reset_index().rename(columns={'index':'user_id', 'user_id':'cnt'})
+    rating_time['cnt']=rating_time['cnt'].astype(str)
+    tmp = train.merge(rating_time, how="left", on="user_id")
+    tmp.loc[tmp['cnt'] == '1', 'rating'] = tmp['rating']-(tmp['rating']-total_avg)*0.5831
+    train = tmp.drop(['cnt'], axis=1)
+    return train
 
 # 미션 1 출판사명 수정함수
 def publisher_modify(books):
@@ -74,14 +83,14 @@ def publisher_modify(books):
 
 # location 수정함수 (country nan 행에 대해) : 미션 1
 def location_modify_country(users: pd.DataFrame) -> pd.DataFrame:
-    users = users.replace('na', np.nan, regex=True) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
-    users = users.replace('', np.nan, regex=True) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
+    users = users.replace('na', np.nan) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
+    users = users.replace('', np.nan) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
     modify_location = users[(users['location_country'].isna())&(users['location_city'].notnull())]['location_city'].values
 
     location_list = []
     for location in modify_location:
         try:
-            right_location = users[(users['location'].str.contains(location))&(users['location_country'].notnull())]['location'].value_counts().index[0]
+            right_location = users[(users['location'].str.contains(location, regex=False))&(users['location_country'].notnull())]['location'].value_counts().index[0]
             location_list.append(right_location)
         except:
             pass
@@ -94,14 +103,14 @@ def location_modify_country(users: pd.DataFrame) -> pd.DataFrame:
 
 # location 수정함수 (state nan 행에 대해)
 def location_modify_state(users: pd.DataFrame) -> pd.DataFrame:
-    users = users.replace('na', np.nan, regex=True) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
-    users = users.replace('', np.nan, regex=True) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
+    users = users.replace('na', np.nan) #특수문자 제거로 n/a가 na로 바뀌게 되었습니다. 따라서 이를 컴퓨터가 인식할 수 있는 결측값으로 변환합니다.
+    users = users.replace('', np.nan) # 일부 경우 , , ,으로 입력된 경우가 있었으므로 이런 경우에도 결측값으로 변환합니다.
     modify_location = users[(users['location_state'].isna())&(users['location_city'].notnull())]['location_city'].values
 
     location_list = []
     for location in modify_location:
         try:
-            right_location = users[(users['location'].str.contains(location))&(users['location_state'].notnull())]['location'].value_counts().index[0]
+            right_location = users[(users['location'].str.contains(location, regex=False))&(users['location_state'].notnull())]['location'].value_counts().index[0]
             location_list.append(right_location)
         except:
             pass
