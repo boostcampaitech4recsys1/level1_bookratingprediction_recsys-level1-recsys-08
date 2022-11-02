@@ -106,13 +106,15 @@ def context_data_load(args):
 
     ######################## DATA LOAD
     users = pd.read_csv(args.DATA_PATH + 'users.csv')
-    books = pd.read_csv(args.DATA_PATH + 'books.csv')
+    # books = pd.read_csv(args.DATA_PATH + 'only_test_books.csv') ##
+    books = pd.read_csv(args.DATA_PATH + 'books.csv') ##
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
+    # train = pd.read_csv(args.DATA_PATH + 'only_test_train_ratings.csv') ##
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
     # 🍁🍁🍁 한번만 평가받은 책의 rating 보정
-    train = edit_once_rating(train)
+    # train = edit_once_rating(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
