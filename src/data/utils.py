@@ -40,10 +40,8 @@ def preprocessing_book_author(books:pd.DataFrame) -> pd.DataFrame:
 
 
 # train에서 평점횟수가 1이하인 책 값 보정
-def edit_once_rating(train: pd.DataFrame) -> pd.DataFrame:
+def edit_once_rated_book(train: pd.DataFrame) -> pd.DataFrame:
     total_avg = train['rating'].mean()
-    cnt_isbn_rating = train.groupby('isbn')['rating'].count()
-    cnt_isbn_rating = cnt_isbn_rating.to_frame()
     rating_time = train['isbn'].value_counts()
     rating_time.to_frame()
     rating_time = rating_time.reset_index().rename(columns={'index':'isbn', 'isbn':'cnt'})

@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader, Dataset
 from .utils import make_category_high, preprocessing_book_author, \
-                    edit_once_rating, publisher_modify, \
+                    edit_once_rated_book, publisher_modify, \
                     location_modify_country, location_modify_state
 
 
@@ -111,7 +111,7 @@ def context_data_load(args):
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
     # 한번만 평가받은 책의 rating 보정
-    # train = edit_once_rating(train)
+    train = edit_once_rated_book(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
