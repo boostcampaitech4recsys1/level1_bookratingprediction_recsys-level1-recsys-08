@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
     ############### NCF
     arg('--NCF_EMBED_DIM', type=int, default=16, help='NCF에서 embedding시킬 차원을 조정할 수 있습니다.')
-    arg('--NCF_MLP_DIMS', type=list, default=(16, 16), help='NCF에서 MLP Network의 차원을 조정할 수 있습니다.')
+    arg('--NCF_MLP_DIMS', type=int, nargs='+', default=(16, 16), help='NCF에서 MLP Network의 차원을 조정할 수 있습니다.')
     arg('--NCF_DROPOUT', type=float, default=0.2, help='NCF에서 Dropout rate를 조정할 수 있습니다.')
 
     ############### WDN

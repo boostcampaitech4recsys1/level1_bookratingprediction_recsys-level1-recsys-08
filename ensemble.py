@@ -11,7 +11,7 @@ def main(args):
         raise ValueError("Ensemble할 Model을 적어도 2개 이상 입력해 주세요.")
     
     en = Ensemble(filenames = file_list,filepath=args.RESULT_PATH)
-
+    import pdb;pdb.set_trace()
     if args.ENSEMBLE_STRATEGY == 'WEIGHTED':
         if args.ENSEMBLE_WEIGHT: 
             strategy_title = 'sw-'+'-'.join(map(str,*args.ENSEMBLE_WEIGHT)) #simple weighted
