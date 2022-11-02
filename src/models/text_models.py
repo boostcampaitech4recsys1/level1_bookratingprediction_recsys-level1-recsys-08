@@ -132,7 +132,7 @@ class DeepCoNN:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'Model saved'])
             else:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'None'])
-            tk0.set_postfix(train_loss=total_loss/n, valid_loss=val_total_loss/val_n)
+            tk0.set_postfix(t_los=total_loss/n,v_los=val_total_loss/val_n,m_los=minimum_loss)
         return minimum_loss
 
 
