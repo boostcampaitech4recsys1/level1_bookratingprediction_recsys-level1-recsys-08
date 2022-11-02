@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader, Dataset
 from .utils import make_category_high, preprocessing_book_author, \
-                    edit_once_rated_book, publisher_modify, \
+                    edit_once_rated_book, edit_once_rated_user, publisher_modify, \
                     location_modify_country, location_modify_state
 
 
@@ -35,8 +35,8 @@ def process_context_data(users, books, ratings1, ratings2):
         users['location_state'] = users['location'].apply(lambda x: x.split(',')[1].strip())
         users['location_country'] = users['location'].apply(lambda x: x.split(',')[2].strip())
         # 🍁🍁🍁 location 전처리, 주의❗️ 아래의 두 함수를 호출하면 데이터 로드가 약 1분 30초가 소요됨.
-        # users = location_modify_country(users)
-        # users = location_modify_state(users)
+        users = location_modify_country(users)
+        users = location_modify_state(users)
     users = users.drop(['location'], axis=1)
     
     # 🍁🍁🍁 books에 category_high 추가
@@ -112,6 +112,9 @@ def context_data_load(args):
 
     # 한번만 평가받은 책의 rating 보정
     train = edit_once_rated_book(train)
+
+    # 한번만 평가한 유저의 rating 보정
+    train = edit_once_rated_user(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()

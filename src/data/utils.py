@@ -39,7 +39,7 @@ def preprocessing_book_author(books:pd.DataFrame) -> pd.DataFrame:
     return books
 
 
-# train에서 평점횟수가 1이하인 책 값 보정
+# train에서 평점횟수가 1이하인 책 rating 보정
 def edit_once_rated_book(train: pd.DataFrame) -> pd.DataFrame:
     total_avg = train['rating'].mean()
     rating_time = train['isbn'].value_counts()
@@ -51,6 +51,17 @@ def edit_once_rated_book(train: pd.DataFrame) -> pd.DataFrame:
     train = tmp.drop(['cnt'], axis=1)
     return train
 
+# train에서 평점횟수가 1이하인 유저의 rating 보정
+def edit_once_rated_user(train: pd.DataFrame) -> pd.DataFrame:
+    total_avg = train['rating'].mean()
+    rating_time = train['user_id'].value_counts()
+    rating_time.to_frame()
+    rating_time = rating_time.reset_index().rename(columns={'index':'user_id', 'user_id':'cnt'})
+    rating_time['cnt']=rating_time['cnt'].astype(str)
+    tmp = train.merge(rating_time, how="left", on="user_id")
+    tmp.loc[tmp['cnt'] == '1', 'rating'] = tmp['rating']-(tmp['rating']-total_avg)*0.5831
+    train = tmp.drop(['cnt'], axis=1)
+    return train
 
 # 미션 1 출판사명 수정함수
 def publisher_modify(books):
