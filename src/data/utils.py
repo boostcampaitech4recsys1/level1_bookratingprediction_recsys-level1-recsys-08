@@ -32,6 +32,10 @@ def preprocessing_book_author(books:pd.DataFrame) -> pd.DataFrame:
     books['book_author'] = books['book_author'].str.replace('_',' ', regex=True)
     books['book_author'] = books['book_author'].str.lower()
     books['book_author'] = books['book_author'].apply(lambda x:' '.join(sorted(x.split())))
+    books['book_author'] = books.book_author.apply(lambda x: re.sub("[\W_]+"," ",x).strip()) # 남은 특수문자 제거 및 strip
+    athr_cnt = books.book_author.value_counts().reset_index()
+    not1cnt = athr_cnt[athr_cnt.book_author>1]['index'].unique().tolist()
+    books.loc[(books.book_author.apply(len)<=2) | (~books.book_author.isin(not1cnt)),'book_author']='others'
     return books
 
 
