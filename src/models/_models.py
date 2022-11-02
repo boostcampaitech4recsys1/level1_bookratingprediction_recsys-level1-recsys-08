@@ -57,6 +57,7 @@ class FeaturesEmbedding(nn.Module):
 
     def __init__(self, field_dims: np.ndarray, embed_dim: int):
         super().__init__()
+        self.embed_dim = embed_dim
         self.embedding = torch.nn.Embedding(sum(field_dims), embed_dim)
         self.offsets = np.array((0, *np.cumsum(field_dims)[:-1]), dtype=np.long)
         torch.nn.init.xavier_uniform_(self.embedding.weight.data)
@@ -65,8 +66,8 @@ class FeaturesEmbedding(nn.Module):
         """
         :param x: Long tensor of size ``(batch_size, num_fields)``
         """
-        x = x + x.new_tensor(self.offsets).unsqueeze(0)
-        return self.embedding(x)
+        x = x + x.new_tensor(self.offsets).unsqueeze(0) #x.shape = [1024, 3]
+        return self.embedding(x) #return [1024, 3, 8]
 
 class FeaturesLinear(nn.Module):
 
@@ -159,6 +160,7 @@ class MultiLayerPerceptron(nn.Module):
         """
         :param x: Float tensor of size ``(batch_size, embed_dim)``
         """
+        a = 1
         return self.mlp(x)
 
 class _NeuralCollaborativeFiltering(nn.Module):
@@ -207,7 +209,7 @@ class CrossNetwork(nn.Module):
     def __init__(self, input_dim: int, num_layers: int):
         super().__init__()
         self.num_layers = num_layers
-        self.w = torch.nn.ModuleList([
+        self.w = torch.nn.ModuleList([ #input_dim = len(field_dims) * embed_dim
             torch.nn.Linear(input_dim, 1, bias=False) for _ in range(num_layers)
         ])
         self.b = torch.nn.ParameterList([
@@ -218,9 +220,9 @@ class CrossNetwork(nn.Module):
         """
         :param x: Float tensor of size ``(batch_size, num_fields, embed_dim)``
         """
-        x0 = x
+        x0 = x #x.shape = [1024,48] / 원래 = [1024, 32]
         for i in range(self.num_layers):
-            xw = self.w[i](x)
+            xw = self.w[i](x) #shape = [1024, 1]
             x = x0 * xw + self.b[i] + x
         return x
 
@@ -233,6 +235,7 @@ class _DeepCrossNetworkModel(nn.Module):
 
     def __init__(self, field_dims: np.ndarray, embed_dim: int, num_layers: int, mlp_dims: tuple, dropout: float):
         super().__init__()
+        self.embed_dim = embed_dim
         self.embedding = FeaturesEmbedding(field_dims, embed_dim)
         self.embed_output_dim = len(field_dims) * embed_dim
         self.cn = CrossNetwork(self.embed_output_dim, num_layers)
@@ -243,6 +246,8 @@ class _DeepCrossNetworkModel(nn.Module):
         """
         :param x: Long tensor of size ``(batch_size, num_fields)``
         """
+        #x.shape = 1024, 3, x 각 요소 = [user_id, isbn, age]
+        #embed_output_dim = num_fields * embed_dim
         embed_x = self.embedding(x).view(-1, self.embed_output_dim)
         x_l1 = self.cn(embed_x)
         x_out = self.mlp(x_l1)
