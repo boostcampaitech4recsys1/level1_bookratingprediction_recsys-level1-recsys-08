@@ -19,7 +19,10 @@ def seed_everything(seed):
 def get_param(parser, args):
     default_set = set(vars(parser.parse_args([])).items())
     input_items = vars(args).items()
-    result = {o[0]:o[1] for o in input_items if o not in default_set}
+    result=dict()
+    for i in input_items:
+        if type(i[1])==list or i not in default_set:
+            result[i[0]]=i[1]
     return result
 
 

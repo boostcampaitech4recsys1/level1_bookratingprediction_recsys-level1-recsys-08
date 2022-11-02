@@ -10,3 +10,4 @@ config/
 __pycache__/
 .env
 *.pt
+*.pickle
