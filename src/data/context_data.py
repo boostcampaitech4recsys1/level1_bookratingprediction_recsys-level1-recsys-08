@@ -120,7 +120,7 @@ def context_data_load(args):
     # train = edit_once_rated_book(train)
 
     # 한번만 평가한 유저의 rating 보정
-    # train = edit_once_rated_user(train)
+    train = edit_once_rated_user(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
