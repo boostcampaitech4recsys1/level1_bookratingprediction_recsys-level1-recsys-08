@@ -33,17 +33,17 @@ def process_context_data(users, books, ratings1, ratings2):
         users['location_state'] = users['location'].apply(lambda x: x.split(',')[1].strip())
         users['location_country'] = users['location'].apply(lambda x: x.split(',')[2].strip())
         # 🍁🍁🍁 location 전처리, 주의❗️ 아래의 두 함수를 호출하면 데이터 로드가 약 1분 30초가 소요됨.
-        users = location_modify_country(users)
-        users = location_modify_state(users)
+        # users = location_modify_country(users)
+        # users = location_modify_state(users)
     users = users.drop(['location'], axis=1)
     
     # 🍁🍁🍁 books에 category_high 추가
-    books = make_category_high(books)
+    # books = make_category_high(books)
     # year_of_publication 처리
     books.loc[books.year_of_publication<1900, 'year_of_publication'] = [1980, 1956, 1971]
 
     # 🍁🍁🍁 books의 book_author 전처리
-    books = preprocessing_book_author(books)
+    # books = preprocessing_book_author(books)
 
     # language 처리 
     books.loc[books.language!='en','language']='others'
