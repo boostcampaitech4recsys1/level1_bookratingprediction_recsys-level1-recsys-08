@@ -111,10 +111,10 @@ def context_data_load(args):
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
     # 한번만 평가받은 책의 rating 보정
-    train = edit_once_rated_book(train)
+    # train = edit_once_rated_book(train)
 
     # 한번만 평가한 유저의 rating 보정
-    train = edit_once_rated_user(train)
+    # train = edit_once_rated_user(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
