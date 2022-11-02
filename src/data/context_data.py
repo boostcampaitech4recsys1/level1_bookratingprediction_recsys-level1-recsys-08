@@ -111,6 +111,7 @@ def context_data_load(args):
     users = pd.read_csv(args.DATA_PATH + 'users_location.csv')
     books = pd.read_csv(args.DATA_PATH + 'books_publisher.csv')
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
+    # train = pd.read_csv(args.DATA_PATH + 'train_ratings_except_one.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
     val = pd.read_csv(args.DATA_PATH + 'validation1.csv')
