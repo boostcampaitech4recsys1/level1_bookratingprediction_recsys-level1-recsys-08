@@ -8,21 +8,20 @@ from .utils import make_category_high, preprocessing_book_author, \
                     edit_once_rated_book, edit_once_rated_user, publisher_modify, \
                     location_modify_country, location_modify_state
 
-def age_map(x: int) -> int:
+def dl_age_map(x: int) -> int:
     x = int(x)
     if x < 20:
-        return 1
+        return 0
     elif x >= 20 and x < 30:
-        return 2
+        return 1
     elif x >= 30 and x < 40:
-        return 3
+        return 2
     elif x >= 40 and x < 50:
-        return 4
+        return 3
     elif x >= 50 and x < 60:
-        return 5
+        return 4
     else:
-        return 6
-
+        return 5
 
 def process_context_data(users, books, ratings1, ratings2):
     location_set = {'location_city','location_state','location_country'}
@@ -38,15 +37,11 @@ def process_context_data(users, books, ratings1, ratings2):
     users = users.drop(['location'], axis=1)
     
     # 🍁🍁🍁 books에 category_high 추가
-    # books = make_category_high(books)
-    # year_of_publication 처리
-    books.loc[books.year_of_publication<1900, 'year_of_publication'] = [1980, 1956, 1971]
+    books = make_category_high(books)
 
     # 🍁🍁🍁 books의 book_author 전처리
     # books = preprocessing_book_author(books)
 
-    # language 처리 
-    books.loc[books.language!='en','language']='others'
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
@@ -68,9 +63,9 @@ def process_context_data(users, books, ratings1, ratings2):
     test_df['location_country'] = test_df['location_country'].map(loc_country2idx)
 
     train_df['age'] = train_df['age'].fillna(int(train_df['age'].mean()))
-    train_df['age'] = train_df['age'].apply(age_map)
+    train_df['age'] = train_df['age'].apply(dl_age_map)
     test_df['age'] = test_df['age'].fillna(int(test_df['age'].mean()))
-    test_df['age'] = test_df['age'].apply(age_map)
+    test_df['age'] = test_df['age'].apply(dl_age_map)
 
     # book 파트 인덱싱
     category2idx = {v:k for k,v in enumerate(context_df['category'].unique())}
@@ -112,6 +107,12 @@ def dl_data_load(args):
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
+    # 한번만 평가받은 책의 rating 보정
+    # train = edit_once_rated_book(train)
+
+    # 한번만 평가한 유저의 rating 보정
+    # train = edit_once_rated_user(train)
+
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
 
@@ -132,13 +133,11 @@ def dl_data_load(args):
     books['isbn'] = books['isbn'].map(isbn2idx)
 
     idx, context_train, context_test = process_context_data(users, books, train, test)
-    field_dims = np.array([len(user2idx), len(isbn2idx),
-                            6, len(idx['loc_city2idx']), len(idx['loc_state2idx']), len(idx['loc_country2idx']),
-                            len(idx['category2idx']), len(idx['categoryhigh2idx']), len(idx['publisher2idx']), len(idx['language2idx']), len(idx['author2idx'])], dtype=np.uint32)
+    field_dims = np.array([len(user2idx), len(isbn2idx), 6], dtype=np.uint32)
 
     data = {
-            'train':context_train,
-            'test':context_test.drop(['rating'], axis=1),
+            'train':context_train[['user_id','isbn','age','rating']],
+            'test':context_test[['user_id','isbn','age']],
             'field_dims':field_dims,
             'users':users,
             'books':books,
@@ -148,7 +147,6 @@ def dl_data_load(args):
             'user2idx':user2idx,
             'isbn2idx':isbn2idx,
             }
-
 
     return data
 
