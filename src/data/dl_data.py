@@ -126,11 +126,11 @@ def dl_data_load(args):
     books['isbn'] = books['isbn'].map(isbn2idx)
 
     idx, context_train, context_test = process_context_data(users, books, train, test)
-    field_dims = np.array([len(user2idx), len(isbn2idx), len(idx["categoryhigh2idx"]), len(idx["loc_city2idx"])], dtype=np.uint32)
+    field_dims = np.array([len(user2idx), len(isbn2idx)], dtype=np.uint32)
                                                         #location, author 전처리 주의!
     data = {
-            'train':context_train[['user_id','isbn','category_high','location_city','rating']],
-            'test':context_test[['user_id','isbn','category_high','location_city']],
+            'train':context_train[['user_id','isbn','rating']],
+            'test':context_test[['user_id','isbn']],
             'field_dims':field_dims,
             'users':users,
             'books':books,
@@ -151,11 +151,11 @@ def dl_data_split(args, data):
                                                         random_state=args.SEED,
                                                         shuffle=True
                                                         )
-    tmp = pd.concat([X_train, y_train], axis=1)
-    tmp = edit_once_rated_book(tmp)
-    tmp = edit_once_rated_user(tmp)
-    X_train = tmp.drop(['rating'], axis=1)
-    y_train = tmp['rating']
+    # tmp = pd.concat([X_train, y_train], axis=1)
+    # tmp = edit_once_rated_book(tmp)
+    # tmp = edit_once_rated_user(tmp)
+    # X_train = tmp.drop(['rating'], axis=1)
+    # y_train = tmp['rating']
     data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
     return data
 

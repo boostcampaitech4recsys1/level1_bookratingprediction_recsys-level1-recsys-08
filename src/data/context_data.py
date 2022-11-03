@@ -110,12 +110,6 @@ def context_data_load(args):
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
-    # 한번만 평가받은 책의 rating 보정
-    # train = edit_once_rated_book(train)
-
-    # 한번만 평가한 유저의 rating 보정
-    # train = edit_once_rated_user(train)
-
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
 
@@ -165,6 +159,11 @@ def context_data_split(args, data):
                                                         random_state=args.SEED,
                                                         shuffle=True
                                                         )
+    # tmp = pd.concat([X_train, y_train], axis=1)
+    # tmp = edit_once_rated_book(tmp)
+    # tmp = edit_once_rated_user(tmp)
+    # # X_train = tmp.drop(['rating'], axis=1)
+    # y_train = tmp['rating']
     data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
     return data
 
