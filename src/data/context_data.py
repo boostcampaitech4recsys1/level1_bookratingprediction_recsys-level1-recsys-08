@@ -104,17 +104,17 @@ def process_context_data(users, books, ratings1, ratings2):
 def context_data_load(args):
 
     ######################## DATA LOAD
-    users = pd.read_csv(args.DATA_PATH + 'users.csv')
-    books = pd.read_csv(args.DATA_PATH + 'books.csv')
+    users = pd.read_csv(args.DATA_PATH + 'users_location.csv')
+    books = pd.read_csv(args.DATA_PATH + 'books_publisher.csv')
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
 
     # 한번만 평가받은 책의 rating 보정
-    # train = edit_once_rated_book(train)
+    train = edit_once_rated_book(train)
 
     # 한번만 평가한 유저의 rating 보정
-    # train = edit_once_rated_user(train)
+    train = edit_once_rated_user(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
