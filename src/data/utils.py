@@ -61,7 +61,7 @@ def edit_once_rated_user(train: pd.DataFrame) -> pd.DataFrame:
     rating_time = rating_time.reset_index().rename(columns={'index':'user_id', 'user_id':'cnt'})
     rating_time['cnt']=rating_time['cnt'].astype(int)
     tmp = train.merge(rating_time, how="left", on="user_id")
-    tmp.loc[tmp['cnt'] < 1,'rating'] = tmp[tmp['cnt'] < 1].apply(lambda x : steam_rating(x,total_avg),axis = 1)
+    tmp.loc[tmp['cnt'] < 2,'rating'] = tmp[tmp['cnt'] < 2].apply(lambda x : steam_rating(x,total_avg),axis = 1)
     train = tmp.drop(['cnt'], axis=1)
     return train
 
