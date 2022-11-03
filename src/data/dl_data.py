@@ -40,7 +40,7 @@ def process_context_data(users, books, ratings1, ratings2):
     books = make_category_high(books)
 
     # 🍁🍁🍁 books의 book_author 전처리
-    # books = preprocessing_book_author(books)
+    books = preprocessing_book_author(books)
 
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
@@ -95,7 +95,6 @@ def process_context_data(users, books, ratings1, ratings2):
         "language2idx":language2idx,
         "author2idx":author2idx,
     }
-
     return idx, train_df, test_df
 
 def dl_data_load(args):
@@ -106,12 +105,6 @@ def dl_data_load(args):
     train = pd.read_csv(args.DATA_PATH + 'train_ratings.csv')
     test = pd.read_csv(args.DATA_PATH + 'test_ratings.csv')
     sub = pd.read_csv(args.DATA_PATH + 'sample_submission.csv')
-
-    # 한번만 평가받은 책의 rating 보정
-    # train = edit_once_rated_book(train)
-
-    # 한번만 평가한 유저의 rating 보정
-    # train = edit_once_rated_user(train)
 
     ids = pd.concat([train['user_id'], sub['user_id']]).unique()
     isbns = pd.concat([train['isbn'], sub['isbn']]).unique()
@@ -133,11 +126,11 @@ def dl_data_load(args):
     books['isbn'] = books['isbn'].map(isbn2idx)
 
     idx, context_train, context_test = process_context_data(users, books, train, test)
-    field_dims = np.array([len(user2idx), len(isbn2idx), 6], dtype=np.uint32)
-
+    field_dims = np.array([len(user2idx), len(isbn2idx), len(idx["categoryhigh2idx"]), len(idx["loc_city2idx"])], dtype=np.uint32)
+                                                        #location, author 전처리 주의!
     data = {
-            'train':context_train[['user_id','isbn','age','rating']],
-            'test':context_test[['user_id','isbn','age']],
+            'train':context_train[['user_id','isbn','category_high','location_city','rating']],
+            'test':context_test[['user_id','isbn','category_high','location_city']],
             'field_dims':field_dims,
             'users':users,
             'books':books,
@@ -158,6 +151,11 @@ def dl_data_split(args, data):
                                                         random_state=args.SEED,
                                                         shuffle=True
                                                         )
+    tmp = pd.concat([X_train, y_train], axis=1)
+    tmp = edit_once_rated_book(tmp)
+    tmp = edit_once_rated_user(tmp)
+    X_train = tmp.drop(['rating'], axis=1)
+    y_train = tmp['rating']
     data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
     return data
 
