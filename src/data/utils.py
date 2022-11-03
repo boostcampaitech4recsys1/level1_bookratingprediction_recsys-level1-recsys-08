@@ -38,6 +38,8 @@ def preprocessing_book_author(books:pd.DataFrame) -> pd.DataFrame:
     books.loc[(books.book_author.apply(len)<=2) | (~books.book_author.isin(not1cnt)),'book_author']='others'
     return books
 
+def steam_rating(row,total_avg):
+    return row['rating']-(row['rating']-total_avg)*2**(-np.log10(row['cnt']+5))
 
 # train에서 평점횟수가 1이하인 책 rating 보정
 def edit_once_rated_book(train: pd.DataFrame) -> pd.DataFrame:
@@ -45,9 +47,9 @@ def edit_once_rated_book(train: pd.DataFrame) -> pd.DataFrame:
     rating_time = train['isbn'].value_counts()
     rating_time.to_frame()
     rating_time = rating_time.reset_index().rename(columns={'index':'isbn', 'isbn':'cnt'})
-    rating_time['cnt']=rating_time['cnt'].astype(str)
+    rating_time['cnt']=rating_time['cnt'].astype(int)
     tmp = train.merge(rating_time, how="left", on="isbn")
-    tmp.loc[tmp['cnt'] == '1', 'rating'] = tmp['rating']-(tmp['rating']-total_avg)*0.5831
+    tmp.loc[tmp['cnt'] < 5,'rating'] = tmp[tmp['cnt'] < 5].apply(lambda x : steam_rating(x,total_avg),axis = 1)
     train = tmp.drop(['cnt'], axis=1)
     return train
 
@@ -57,9 +59,9 @@ def edit_once_rated_user(train: pd.DataFrame) -> pd.DataFrame:
     rating_time = train['user_id'].value_counts()
     rating_time.to_frame()
     rating_time = rating_time.reset_index().rename(columns={'index':'user_id', 'user_id':'cnt'})
-    rating_time['cnt']=rating_time['cnt'].astype(str)
+    rating_time['cnt']=rating_time['cnt'].astype(int)
     tmp = train.merge(rating_time, how="left", on="user_id")
-    tmp.loc[tmp['cnt'] == '1', 'rating'] = tmp['rating']-(tmp['rating']-total_avg)*0.5831
+    tmp.loc[tmp['cnt'] < 5,'rating'] = tmp[tmp['cnt'] < 5].apply(lambda x : steam_rating(x,total_avg),axis = 1)
     train = tmp.drop(['cnt'], axis=1)
     return train
 
