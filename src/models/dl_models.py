@@ -14,13 +14,13 @@ from ._models import rmse, RMSELoss
 
 class NeuralCollaborativeFiltering:
 
-    def __init__(self, args, data):
+    def __init__(self, args, data=None, inference_model=False):
         super().__init__()
 
         self.criterion = RMSELoss()
-
-        self.train_dataloader = data['train_dataloader']
-        self.valid_dataloader = data['valid_dataloader']
+        if data is not None:
+            self.train_dataloader = data['train_dataloader']
+            self.valid_dataloader = data['valid_dataloader']
         self.field_dims = data['field_dims']
         self.user_field_idx = np.array((0, ), dtype=np.long)
         self.item_field_idx=np.array((1, ), dtype=np.long)
@@ -47,6 +47,7 @@ class NeuralCollaborativeFiltering:
         self.model_name = 'NCF_MODEL'
         self.min_val_loss = args.MIN_VAL_LOSS
         self.pretrained = args.PRETRAINED
+        self.inference_model = inference_model
 
 
     def train(self):
@@ -107,6 +108,15 @@ class NeuralCollaborativeFiltering:
                 y = self.model(fields)
                 predicts.extend(y.tolist())
         return predicts
+
+    def predict_once(self, data):
+        self.model.eval()
+        if self.inference_model:
+            self.model.load_state_dict(torch.load(self.inference_model))
+        with torch.no_grad():
+                fields = data[0].to(self.device)
+                y = self.model(fields)
+        return y
 
 
 class WideAndDeepModel:
@@ -201,6 +211,15 @@ class WideAndDeepModel:
                 y = self.model(fields)
                 predicts.extend(y.tolist())
         return predicts
+
+    def predict_once(self, data):
+        self.model.eval()
+        if self.inference_model:
+            self.model.load_state_dict(torch.load(self.inference_model))
+        with torch.no_grad():
+                fields = data[0].to(self.device)
+                y = self.model(fields)
+        return y 
 
 
 class DeepCrossNetworkModel:
