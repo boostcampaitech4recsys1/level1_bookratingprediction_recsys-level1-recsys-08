@@ -36,12 +36,11 @@ model = NeuralCollaborativeFiltering(args, data, inference_model=model_path)
 
 max_user = max(data['idx2user'].keys())
 max_isbn = max(data['idx2isbn'].keys())
-user_id = st.number_input('Pick User ID', 0, max_user)
-book_id = st.number_input('Pick Book ID', 0, max_isbn)
-predict_score = model.predict_once(torch.tensor([user_id,book_id]))
-st.write(f"Predict Score is: {predict_score.item():.2f}")
-
-# books = pd.read_csv('data/books_image.csv')
+with st.expander("If You Know UserID and BookID - Predict Score"):
+    user_id = st.number_input('Pick User ID', 0, max_user)
+    book_id = st.number_input('Pick Book ID', 0, max_isbn)
+    predict_score = model.predict_once(torch.tensor([user_id, book_id], dtype=torch.int32))
+    st.write(f"Predict Score is: {predict_score.item():.2f}")
 
 def capture_return(_):
     st.session_state["clicked"] = True
@@ -58,12 +57,17 @@ def set_value(key):
 def set_status(status):
     st.session_state["status"] = status
 
+def retry():
+    st.session_state["selected_book_count"] = 0
+    st.session_state["added_book_ids"] = []
+    st.session_state["status"] = False
+
 STATE_KEYS_VALS = [
     ("selected_book_count", 0),  # main part
     ("added_book_ids", []),  # main part
     ("status", False),
     ("clicked", False),
-    ("input_len", 10),  # sidebar
+    ("input_len", 5),  # sidebar
     ("top_k", 10),  # sidebar
     ("years", (1990, 2010)),  # sidebar
 ]
@@ -101,6 +105,7 @@ st.title("BookTube")
 
 if st.session_state["status"]:
     unique_key = 0
+    # top_books2 = top_books[~top_books.isbn.isin(st.session_state["added_book_ids"])].reset_index(drop=True)
     selection_container = st.empty()
     if st.session_state["selected_book_count"] < st.session_state["input_len"]:
         with selection_container.container():
@@ -133,6 +138,7 @@ if st.session_state["status"]:
         
         ## Recommend
         isbn_list = st.session_state.added_book_ids
+        print(">>>",isbn_list)
         title_list = top_books[top_books.isbn.isin(isbn_list)].book_title.tolist()
         df_recommend=pd.DataFrame(columns=['title','euclidean_similarity'])
         for title in title_list:
@@ -148,9 +154,8 @@ if st.session_state["status"]:
         result.drop_duplicates('book_title', inplace=True)
         result = result[~result.isbn.isin(top10_isbn)]
         result.reset_index(drop=True, inplace=True)
-        ## recommend
 
-
+        ## Render Top 10 Books
         with st.container():
             st.subheader("Top 10 Books")
             for col_index, col in enumerate(st.columns(10)):
@@ -162,17 +167,37 @@ if st.session_state["status"]:
                     st.image(poster)
                     st.caption(title)
 
+        ## Render Recommended Books
         with st.container():
             st.subheader("You May Also Like These Books")
             topk = 10 if len(result)>=10 else len(result)
+            print(">>>",topk)
             for col_index, col in enumerate(st.columns(topk)):
                 book = result.iloc[col_index]
                 title = book["book_title"]
                 poster = book['img_url']
+                nvotes = book.NumberOfVotes
+                rating = book.AverageRatings
+                rec_score = book.rec_score
                 with col:
                     st.image(poster)
                     st.caption(title)
+                    st.caption(f"{rec_score:.1%} 일치해요!")
+                    with st.expander("더보기"):
+                        st.caption(f"작가: {book.book_author}")
+                        st.caption(f"출판년도: {book.year_of_publication}")
+                        st.caption(f"카테고리: {book.category_high}")
+                        st.caption(f"요약: {book.summary}")
+                        st.caption(f"평가 횟수: {nvotes}")
+                        st.caption(f"평균 평점: {rating:.1f}")
+                        
 
+        (_, center, _) = st.columns([4, 1, 4])
+        with center:
+            st.button(
+                "Retry",
+                on_click=retry,
+            )
 
 
 
