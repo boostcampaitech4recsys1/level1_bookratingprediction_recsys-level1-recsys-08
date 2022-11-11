@@ -114,7 +114,7 @@ class NeuralCollaborativeFiltering:
         if self.inference_model:
             self.model.load_state_dict(torch.load(self.inference_model))
         with torch.no_grad():
-                fields = data[0].to(self.device)
+                fields = data.to(self.device)
                 y = self.model(fields)
         return y
 
