@@ -3,3 +3,4 @@ scikit-learn
 nltk
 transformers
 python-dotenv
+omegaconf
