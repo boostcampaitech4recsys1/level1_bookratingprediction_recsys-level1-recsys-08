@@ -18,7 +18,7 @@ class NeuralCollaborativeFiltering:
         super().__init__()
 
         self.criterion = RMSELoss()
-        if data is not None:
+        if 'train_dataloader' in data.keys():
             self.train_dataloader = data['train_dataloader']
             self.valid_dataloader = data['valid_dataloader']
         self.field_dims = data['field_dims']
