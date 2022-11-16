@@ -29,6 +29,7 @@ def main(args):
     files_title = '-'.join(file_list)
 
     output.to_csv(f'{args.RESULT_PATH}{files_title}-{strategy_title}.csv',index=False)
+    print(f'{args.RESULT_PATH}{files_title}-{strategy_title}.csv')
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='parser')

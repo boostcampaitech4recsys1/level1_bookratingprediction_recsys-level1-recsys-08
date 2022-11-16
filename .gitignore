@@ -1,4 +1,12 @@
 images/
 *.jpg
 *.csv
+*.npy
 .DS_Store
+.ipynb_checkpoints
+*__pycache__
+config/
+*.yaml
+__pycache__/
+.env
+*.pt

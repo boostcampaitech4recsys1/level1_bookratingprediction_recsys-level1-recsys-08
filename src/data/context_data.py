@@ -1,9 +1,14 @@
+import re
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader, Dataset
+from .utils import make_category_high, preprocessing_book_author, \
+                    edit_once_rated_book, edit_once_rated_user, publisher_modify, \
+                    location_modify_country, location_modify_state
+
 
 def age_map(x: int) -> int:
     x = int(x)
@@ -20,18 +25,33 @@ def age_map(x: int) -> int:
     else:
         return 6
 
+
 def process_context_data(users, books, ratings1, ratings2):
-    users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
-    users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
-    users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
+    location_set = {'location_city','location_state','location_country'}
+    if len(set(users.columns).intersection(location_set))==3: # 기존 users에 city, state, country가 존재한다면,
+        pass
+    else:
+        users['location_city'] = users['location'].apply(lambda x: x.split(',')[0].strip())
+        users['location_state'] = users['location'].apply(lambda x: x.split(',')[1].strip())
+        users['location_country'] = users['location'].apply(lambda x: x.split(',')[2].strip())
+        # 🍁🍁🍁 location 전처리, 주의❗️ 아래의 두 함수를 호출하면 데이터 로드가 약 1분 30초가 소요됨.
+        # users = location_modify_country(users)
+        # users = location_modify_state(users)
     users = users.drop(['location'], axis=1)
+    
+    # 🍁🍁🍁 books에 category_high 추가
+    books = make_category_high(books)
+
+    # 🍁🍁🍁 books의 book_author 전처리
+    # books = preprocessing_book_author(books)
+
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
     # 인덱싱 처리된 데이터 조인
-    context_df = ratings.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'publisher', 'language', 'book_author']], on='isbn', how='left')
-    train_df = ratings1.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'publisher', 'language', 'book_author']], on='isbn', how='left')
-    test_df = ratings2.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'publisher', 'language', 'book_author']], on='isbn', how='left')
+    context_df = ratings.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high', 'publisher', 'language', 'book_author']], on='isbn', how='left')
+    train_df = ratings1.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high',  'publisher', 'language', 'book_author']], on='isbn', how='left')
+    test_df = ratings2.merge(users, on='user_id', how='left').merge(books[['isbn', 'category', 'category_high',  'publisher', 'language', 'book_author']], on='isbn', how='left')
 
     # 인덱싱 처리
     loc_city2idx = {v:k for k,v in enumerate(context_df['location_city'].unique())}
@@ -52,15 +72,18 @@ def process_context_data(users, books, ratings1, ratings2):
 
     # book 파트 인덱싱
     category2idx = {v:k for k,v in enumerate(context_df['category'].unique())}
+    categoryhigh2idx = {v:k for k,v in enumerate(context_df['category_high'].unique())}
     publisher2idx = {v:k for k,v in enumerate(context_df['publisher'].unique())}
     language2idx = {v:k for k,v in enumerate(context_df['language'].unique())}
     author2idx = {v:k for k,v in enumerate(context_df['book_author'].unique())}
 
     train_df['category'] = train_df['category'].map(category2idx)
+    train_df['category_high'] = train_df['category_high'].map(categoryhigh2idx)
     train_df['publisher'] = train_df['publisher'].map(publisher2idx)
     train_df['language'] = train_df['language'].map(language2idx)
     train_df['book_author'] = train_df['book_author'].map(author2idx)
     test_df['category'] = test_df['category'].map(category2idx)
+    test_df['category_high'] = test_df['category_high'].map(categoryhigh2idx)
     test_df['publisher'] = test_df['publisher'].map(publisher2idx)
     test_df['language'] = test_df['language'].map(language2idx)
     test_df['book_author'] = test_df['book_author'].map(author2idx)
@@ -70,13 +93,13 @@ def process_context_data(users, books, ratings1, ratings2):
         "loc_state2idx":loc_state2idx,
         "loc_country2idx":loc_country2idx,
         "category2idx":category2idx,
+        "categoryhigh2idx":categoryhigh2idx,
         "publisher2idx":publisher2idx,
         "language2idx":language2idx,
         "author2idx":author2idx,
     }
 
     return idx, train_df, test_df
-
 
 def context_data_load(args):
 
@@ -109,7 +132,7 @@ def context_data_load(args):
     idx, context_train, context_test = process_context_data(users, books, train, test)
     field_dims = np.array([len(user2idx), len(isbn2idx),
                             6, len(idx['loc_city2idx']), len(idx['loc_state2idx']), len(idx['loc_country2idx']),
-                            len(idx['category2idx']), len(idx['publisher2idx']), len(idx['language2idx']), len(idx['author2idx'])], dtype=np.uint32)
+                            len(idx['category2idx']), len(idx['categoryhigh2idx']), len(idx['publisher2idx']), len(idx['language2idx']), len(idx['author2idx'])], dtype=np.uint32)
 
     data = {
             'train':context_train,
@@ -136,6 +159,11 @@ def context_data_split(args, data):
                                                         random_state=args.SEED,
                                                         shuffle=True
                                                         )
+    # tmp = pd.concat([X_train, y_train], axis=1)
+    # tmp = edit_once_rated_book(tmp)
+    # tmp = edit_once_rated_user(tmp)
+    # # X_train = tmp.drop(['rating'], axis=1)
+    # y_train = tmp['rating']
     data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
     return data
 

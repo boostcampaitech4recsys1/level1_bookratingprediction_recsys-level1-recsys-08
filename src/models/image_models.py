@@ -61,11 +61,15 @@ class CNN_FM:
         self.criterion = RMSELoss()
         self.epochs = args.EPOCHS
         self.model_name = 'image_model'
+        self.pretrained = args.PRETRAINED
 
 
     def train(self):
         minimum_loss = 999999999
         loss_list = []
+        if self.pretrained is not None:
+            self.model.load_state_dict(torch.load(self.pretrained))
+            print('--------------- PRETRAINED_MODEL LOAD ---------------')
         tk0 = tqdm.tqdm(range(self.epochs), smoothing=0, mininterval=1.0)
         for epoch in tk0:
             self.model.train()
@@ -106,7 +110,8 @@ class CNN_FM:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'Model saved'])
             else:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'None'])
-            tk0.set_postfix(train_loss=total_loss/n, valid_loss=val_total_loss/val_n)
+            tk0.set_postfix(train_loss=total_loss/n, valid_loss=val_total_loss/val_n, min_loss=minimum_loss)
+        return minimum_loss
 
 
     def predict(self, test_data_loader):

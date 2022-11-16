@@ -135,7 +135,6 @@ class Text_Dataset(Dataset):
 
     def __getitem__(self, i):
         return {
-                'user_isbn_vector' : torch.tensor(self.user_isbn_vector[i], dtype=torch.long),
                 'user_summary_merge_vector' : torch.tensor(self.user_summary_merge_vector[i].reshape(-1, 1), dtype=torch.float32),
                 'item_summary_vector' : torch.tensor(self.item_summary_vector[i].reshape(-1, 1), dtype=torch.float32),
                 'label' : torch.tensor(self.label[i], dtype=torch.float32),
