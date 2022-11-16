@@ -5,6 +5,10 @@ from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
 from torch.utils.data import TensorDataset, DataLoader, Dataset
+from .utils import make_category_high, preprocessing_book_author, \
+                    edit_once_rated_book, edit_once_rated_user, publisher_modify, \
+                    location_modify_country, location_modify_state
+
 
 def age_map(x: int) -> int:
     x = int(x)
@@ -22,56 +26,25 @@ def age_map(x: int) -> int:
         return 6
 
 
-# 미션 1 출판사명 수정함수
-def publisher_modify(books):
-    publisher_dict=(books['publisher'].value_counts()).to_dict()
-    publisher_count_df= pd.DataFrame(list(publisher_dict.items()),columns = ['publisher','count'])
-
-    publisher_count_df = publisher_count_df.sort_values(by=['count'], ascending = False)
-    
-    modify_list = publisher_count_df[publisher_count_df['count']>1].publisher.values
-    
-    for publisher in modify_list:
-        try:
-            number = books[books['publisher']==publisher]['isbn'].apply(lambda x: x[:4]).value_counts().index[0]
-            right_publisher = books[books['isbn'].apply(lambda x: x[:4])==number]['publisher'].value_counts().index[0]
-            books.loc[books[books['isbn'].apply(lambda x: x[:4])==number].index,'publisher'] = right_publisher
-        except: 
-            pass
-        
-        
-# books에 category_high를 추가해주는 코드
-def make_category_high(books:pd.DataFrame) -> pd.DataFrame:
-    books.loc[books[books['category'].notnull()].index, 'category'] = books[books['category'].notnull()]['category'].apply(lambda x: re.sub('[\W_]+',' ',x).strip())
-    books['category'] = books['category'].str.lower()
-    categories = ['garden','crafts','physics','adventure','music','fiction','nonfiction','science','science fiction','social','homicide',
-    'sociology','disease','religion','christian','philosophy','psycholog','mathemat','agricult','environmental',
-    'business','poetry','drama','literary','travel','motion picture','children','cook','literature','electronic',
-    'humor','animal','bird','photograph','computer','house','ecology','family','architect','camp','criminal','language','india']
-
-    books['category_high'] = books['category'].copy()
-    for category in categories:
-        books.loc[books[books['category'].str.contains(category,na=False)].index,'category_high'] = category
-        
-    category_high_df = pd.DataFrame(books['category_high'].value_counts()).reset_index()
-    category_high_df.columns = ['category','count']
-    others_list = category_high_df[category_high_df['count']<5]['category'].values
-    books.loc[books[books['category_high'].isin(others_list)].index, 'category_high']='others'
-    return books
-
-
 def process_context_data(users, books, ratings1, ratings2):
     location_set = {'location_city','location_state','location_country'}
     if len(set(users.columns).intersection(location_set))==3: # 기존 users에 city, state, country가 존재한다면,
         pass
     else:
-        users['location_city'] = users['location'].apply(lambda x: x.split(',')[0])
-        users['location_state'] = users['location'].apply(lambda x: x.split(',')[1])
-        users['location_country'] = users['location'].apply(lambda x: x.split(',')[2])
+        users['location_city'] = users['location'].apply(lambda x: x.split(',')[0].strip())
+        users['location_state'] = users['location'].apply(lambda x: x.split(',')[1].strip())
+        users['location_country'] = users['location'].apply(lambda x: x.split(',')[2].strip())
+        # 🍁🍁🍁 location 전처리, 주의❗️ 아래의 두 함수를 호출하면 데이터 로드가 약 1분 30초가 소요됨.
+        # users = location_modify_country(users)
+        # users = location_modify_state(users)
     users = users.drop(['location'], axis=1)
     
-    # books에 category_high 추가
+    # 🍁🍁🍁 books에 category_high 추가
     books = make_category_high(books)
+
+    # 🍁🍁🍁 books의 book_author 전처리
+    # books = preprocessing_book_author(books)
+
 
     ratings = pd.concat([ratings1, ratings2]).reset_index(drop=True)
 
@@ -128,7 +101,6 @@ def process_context_data(users, books, ratings1, ratings2):
     }
 
     return idx, train_df, test_df
-
 
 def context_data_load(args):
 
@@ -196,6 +168,11 @@ def context_data_split(args, data):
                                                         random_state=args.SEED,
                                                         shuffle=True
                                                         )
+    # tmp = pd.concat([X_train, y_train], axis=1)
+    # tmp = edit_once_rated_book(tmp)
+    # tmp = edit_once_rated_user(tmp)
+    # # X_train = tmp.drop(['rating'], axis=1)
+    # y_train = tmp['rating']
     data['X_train'], data['X_valid'], data['y_train'], data['y_valid'] = X_train, X_valid, y_train, y_valid
     return data
 

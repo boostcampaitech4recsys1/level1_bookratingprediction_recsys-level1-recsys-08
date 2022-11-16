@@ -47,16 +47,14 @@ class _DeepCoNN(nn.Module):
                              conv_1d_out_dim=conv_1d_out_dim,
                             )
         self.fm = FactorizationMachine_v(
-                                         input_dim=(conv_1d_out_dim * 2) + (embed_dim*len(field_dims)),
+                                         input_dim=(conv_1d_out_dim * 2),
                                          latent_dim=latent_dim,
                                          )
     def forward(self, x):
-        user_isbn_vector, user_text_vector, item_text_vector = x[0], x[1], x[2]
-        user_isbn_feature = self.embedding(user_isbn_vector)
+        user_text_vector, item_text_vector = x[0], x[1]
         user_text_feature = self.cnn_u(user_text_vector)
         item_text_feature = self.cnn_i(item_text_vector)
         feature_vector = torch.cat([
-                                    user_isbn_feature.view(-1, user_isbn_feature.size(1) * user_isbn_feature.size(2)),
                                     user_text_feature,
                                     item_text_feature
                                     ], dim=1)
@@ -83,11 +81,15 @@ class DeepCoNN:
         self.criterion = RMSELoss()
         self.epochs = args.EPOCHS
         self.model_name = 'text_model'
+        self.pretrained = args.PRETRAINED
 
 
     def train(self):
         minimum_loss = 999999999
         loss_list = []
+        if self.pretrained is not None:
+            self.model.load_state_dict(torch.load(self.pretrained))
+            print('--------------- PRETRAINED_MODEL LOAD ---------------')
         tk0 = tqdm.tqdm(range(self.epochs), smoothing=0, mininterval=1.0)
         for epoch in tk0:
             self.model.train()
@@ -128,7 +130,7 @@ class DeepCoNN:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'Model saved'])
             else:
                 loss_list.append([epoch, total_loss/n, val_total_loss/val_n, 'None'])
-            tk0.set_postfix(train_loss=total_loss/n, valid_loss=val_total_loss/val_n)
+            tk0.set_postfix(t_los=total_loss/n,v_los=val_total_loss/val_n,m_los=minimum_loss)
         return minimum_loss
 
 

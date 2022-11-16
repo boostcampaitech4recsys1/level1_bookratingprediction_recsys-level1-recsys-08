@@ -2,6 +2,9 @@ import tqdm
 
 import numpy as np
 
+import time
+import os
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -37,9 +40,22 @@ class NeuralCollaborativeFiltering:
                                                     embed_dim=self.embed_dim, mlp_dims=self.mlp_dims, dropout=self.dropout).to(self.device)
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=self.learning_rate, amsgrad=True, weight_decay=self.weight_decay)
 
+        now = time.localtime()
+        now_date = time.strftime('%Y%m%d', now)
+        now_hour = time.strftime('%X', now)
+        self.save_time = now_date + '_' + now_hour.replace(':', '')
+        self.model_name = 'NCF_MODEL'
+        self.min_val_loss = args.MIN_VAL_LOSS
+        self.pretrained = args.PRETRAINED
+
 
     def train(self):
       # model: type, optimizer: torch.optim, train_dataloader: DataLoader, criterion: torch.nn, device: str, log_interval: int=100
+        minimum_loss = 999999999
+        
+        if self.pretrained is not None:
+            self.model.load_state_dict(torch.load(self.pretrained))
+            print('--------------- PRETRAINED_MODEL LOAD ---------------')
         for epoch in range(self.epochs):
             self.model.train()
             total_loss = 0
@@ -57,7 +73,14 @@ class NeuralCollaborativeFiltering:
                     total_loss = 0
 
             rmse_score = self.predict_train()
-            print('epoch:', epoch, 'validation: rmse:', rmse_score)
+            
+            if minimum_loss > rmse_score:
+                minimum_loss = rmse_score
+                if not os.path.exists('./models'):
+                    os.makedirs('./models')
+                torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
+            print('epoch:', epoch, '| validation rmse:', rmse_score, '| minimum rmse:', minimum_loss)
+        return minimum_loss
 
 
     def predict_train(self):
@@ -75,6 +98,9 @@ class NeuralCollaborativeFiltering:
     def predict(self, dataloader):
         self.model.eval()
         predicts = list()
+        if self.min_val_loss:
+            self.model.load_state_dict(torch.load('./models/{0}_{1}.pt'.format(self.save_time,self.model_name)))
+            print('--------------- MIN_VAL_LOSS STATE LOAD ---------------')
         with torch.no_grad():
             for fields in tqdm.tqdm(dataloader, smoothing=0, mininterval=1.0):
                 fields = fields[0].to(self.device)
@@ -108,9 +134,22 @@ class WideAndDeepModel:
         self.model = _WideAndDeepModel(self.field_dims, self.embed_dim, mlp_dims=self.mlp_dims, dropout=self.dropout).to(self.device)
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=self.learning_rate, amsgrad=True, weight_decay=self.weight_decay)
 
+        now = time.localtime()
+        now_date = time.strftime('%Y%m%d', now)
+        now_hour = time.strftime('%X', now)
+        self.save_time = now_date + '_' + now_hour.replace(':', '')
+        self.model_name = 'WDN_MODEL'
+        self.min_val_loss = args.MIN_VAL_LOSS
+        self.pretrained = args.PRETRAINED
+
 
     def train(self):
       # model: type, optimizer: torch.optim, train_dataloader: DataLoader, criterion: torch.nn, device: str, log_interval: int=100
+        minimum_loss = 999999999
+        
+        if self.pretrained is not None:
+            self.model.load_state_dict(torch.load(self.pretrained))
+            print('--------------- PRETRAINED_MODEL LOAD ---------------')
         for epoch in range(self.epochs):
             self.model.train()
             total_loss = 0
@@ -128,7 +167,14 @@ class WideAndDeepModel:
                     total_loss = 0
 
             rmse_score = self.predict_train()
-            print('epoch:', epoch, 'validation: rmse:', rmse_score)
+            
+            if minimum_loss > rmse_score:
+                minimum_loss = rmse_score
+                if not os.path.exists('./models'):
+                    os.makedirs('./models')
+                torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
+            print('epoch:', epoch, '| validation rmse:', rmse_score, '| minimum rmse:', minimum_loss)
+        return minimum_loss
 
 
     def predict_train(self):
@@ -146,6 +192,9 @@ class WideAndDeepModel:
     def predict(self, dataloader):
         self.model.eval()
         predicts = list()
+        if self.min_val_loss:
+            self.model.load_state_dict(torch.load('./models/{0}_{1}.pt'.format(self.save_time,self.model_name)))
+            print('--------------- MIN_VAL_LOSS STATE LOAD ---------------')
         with torch.no_grad():
             for fields in tqdm.tqdm(dataloader, smoothing=0, mininterval=1.0):
                 fields = fields[0].to(self.device)
@@ -180,9 +229,22 @@ class DeepCrossNetworkModel:
         self.model = _DeepCrossNetworkModel(self.field_dims, self.embed_dim, num_layers=self.num_layers, mlp_dims=self.mlp_dims, dropout=self.dropout).to(self.device)
         self.optimizer = torch.optim.Adam(params=self.model.parameters(), lr=self.learning_rate, amsgrad=True, weight_decay=self.weight_decay)
 
+        now = time.localtime()
+        now_date = time.strftime('%Y%m%d', now)
+        now_hour = time.strftime('%X', now)
+        self.save_time = now_date + '_' + now_hour.replace(':', '')
+        self.model_name = 'DCN_MODEL'
+        self.min_val_loss = args.MIN_VAL_LOSS
+        self.pretrained = args.PRETRAINED
+
 
     def train(self):
       # model: type, optimizer: torch.optim, train_dataloader: DataLoader, criterion: torch.nn, device: str, log_interval: int=100
+        minimum_loss = 999999999
+        
+        if self.pretrained is not None:
+            self.model.load_state_dict(torch.load(self.pretrained))
+            print('--------------- PRETRAINED_MODEL LOAD ---------------')
         for epoch in range(self.epochs):
             self.model.train()
             total_loss = 0
@@ -200,7 +262,14 @@ class DeepCrossNetworkModel:
                     total_loss = 0
 
             rmse_score = self.predict_train()
-            print('epoch:', epoch, 'validation: rmse:', rmse_score)
+            
+            if minimum_loss > rmse_score:
+                minimum_loss = rmse_score
+                if not os.path.exists('./models'):
+                    os.makedirs('./models')
+                torch.save(self.model.state_dict(), './models/{0}_{1}.pt'.format(self.save_time,self.model_name))
+            print('epoch:', epoch, '| validation rmse:', rmse_score, '| minimum rmse:', minimum_loss)
+        return minimum_loss
 
 
     def predict_train(self):
@@ -218,6 +287,9 @@ class DeepCrossNetworkModel:
     def predict(self, dataloader):
         self.model.eval()
         predicts = list()
+        if self.min_val_loss:
+            self.model.load_state_dict(torch.load('./models/{0}_{1}.pt'.format(self.save_time,self.model_name)))
+            print('--------------- MIN_VAL_LOSS STATE LOAD ---------------')
         with torch.no_grad():
             for fields in tqdm.tqdm(dataloader, smoothing=0, mininterval=1.0):
                 fields = fields[0].to(self.device)
