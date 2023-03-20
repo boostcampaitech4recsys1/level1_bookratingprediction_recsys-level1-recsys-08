@@ -10,3 +10,8 @@ config/
 __pycache__/
 .env
 *.pt
+*.svg
+*.dot
+*.json
+*.tsv
+*.tfevents

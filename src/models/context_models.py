@@ -15,7 +15,7 @@ from ._models import rmse, RMSELoss
 
 class FactorizationMachineModel:
 
-    def __init__(self, args, data):
+    def __init__(self, args, data, inference_model=False):
         super().__init__()
 
         self.criterion = RMSELoss()
@@ -42,6 +42,7 @@ class FactorizationMachineModel:
         self.model_name = 'FM_MODEL'
         self.min_val_loss = args.MIN_VAL_LOSS
         self.pretrained = args.PRETRAINED
+        self.inference_model = inference_model
 
 
     def train(self):
@@ -100,12 +101,23 @@ class FactorizationMachineModel:
         if self.min_val_loss:
             self.model.load_state_dict(torch.load('./models/{0}_{1}.pt'.format(self.save_time,self.model_name)))
             print('--------------- MIN_VAL_LOSS STATE LOAD ---------------')
+        if self.inference_model:
+            self.model.load_state_dict(torch.load(self.inference_model))
         with torch.no_grad():
             for fields in tqdm.tqdm(dataloader, smoothing=0, mininterval=1.0):
                 fields = fields[0].to(self.device)
                 y = self.model(fields)
                 predicts.extend(y.tolist())
         return predicts
+
+    def predict_once(self, data):
+        self.model.eval()
+        if self.inference_model:
+            self.model.load_state_dict(torch.load(self.inference_model))
+        with torch.no_grad():
+                fields = data[0].to(self.device)
+                y = self.model(fields)
+        return y
 
 
 class FieldAwareFactorizationMachineModel:
